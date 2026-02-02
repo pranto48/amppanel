@@ -157,24 +157,29 @@ const Index = () => {
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
-          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden"
+          className="fixed inset-0 z-30 bg-background/80 backdrop-blur-sm lg:hidden animate-fade-in"
           onClick={() => setSidebarOpen(false)}
         />
       )}
       
       {/* Sidebar */}
       <div className={cn(
-        "fixed inset-y-0 left-0 z-40 transform lg:translate-x-0 transition-transform duration-300",
+        "fixed inset-y-0 left-0 z-40 transform lg:translate-x-0 transition-all duration-300 ease-out",
         sidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
-        <Sidebar activeItem={activeItem} onItemClick={setActiveItem} />
+        <Sidebar 
+          activeItem={activeItem} 
+          onItemClick={setActiveItem}
+          isOpen={sidebarOpen}
+          onClose={() => setSidebarOpen(false)}
+        />
       </div>
 
-      {/* Main content */}
-      <div className="lg:pl-64">
+      {/* Main content - responsive padding for collapsed sidebar */}
+      <div className="lg:pl-20 xl:pl-64 transition-all duration-300">
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
-        <main className="p-6">
+        <main className="p-4 sm:p-6 animate-fade-in">
           {renderContent()}
         </main>
       </div>
