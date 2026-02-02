@@ -14,6 +14,7 @@ import { DatabasesManagement } from "@/components/DatabasesManagement";
 import { FileManager } from "@/components/FileManager";
 import { Terminal } from "@/components/Terminal";
 import { SecurityManagement } from "@/components/SecurityManagement";
+import { DNSManager } from "@/components/DNSManager";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -56,6 +57,8 @@ const Index = () => {
         return <Terminal />;
       case "security":
         return <SecurityManagement />;
+      case "dns":
+        return <DNSManager />;
       case "dashboard":
       default:
         return (
