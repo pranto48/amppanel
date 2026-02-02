@@ -50,6 +50,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useFirmwareUpdate, CURRENT_VERSION } from "@/hooks/useFirmwareUpdate";
+import { TwoFactorSetup } from "@/components/TwoFactorSetup";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
@@ -388,45 +389,7 @@ export const SettingsPage = () => {
         {/* Security Tab */}
         <TabsContent value="security" className="space-y-6">
           {/* Two-Factor Authentication */}
-          <Card className="glass-card border-border">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Smartphone className="w-5 h-5" />
-                Two-Factor Authentication
-              </CardTitle>
-              <CardDescription>Add an extra layer of security to your account</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-sm font-medium text-foreground">
-                    {twoFactorEnabled ? "2FA is enabled" : "2FA is disabled"}
-                  </p>
-                  <p className="text-xs text-muted-foreground">
-                    {twoFactorEnabled
-                      ? "Your account is protected with an authenticator app"
-                      : "Enable 2FA to secure your account with an authenticator app"}
-                  </p>
-                </div>
-                <Badge
-                  variant="outline"
-                  className={
-                    twoFactorEnabled
-                      ? "bg-success/20 text-success border-success/30"
-                      : "bg-warning/20 text-warning border-warning/30"
-                  }
-                >
-                  {twoFactorEnabled ? "Enabled" : "Disabled"}
-                </Badge>
-              </div>
-              <Button
-                variant={twoFactorEnabled ? "destructive" : "default"}
-                onClick={handleToggle2FA}
-              >
-                {twoFactorEnabled ? "Disable 2FA" : "Enable 2FA"}
-              </Button>
-            </CardContent>
-          </Card>
+          <TwoFactorSetup />
 
           {/* Security Preferences */}
           <Card className="glass-card border-border">
