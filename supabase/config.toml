@@ -2,3 +2,6 @@ project_id = "xdxtcxseaymblvycryrn"
 
 [functions.terminal]
 verify_jwt = true
+
+[functions.setup-admin]
+verify_jwt = false
