@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Database, Plus, Search, Trash2, ExternalLink, RefreshCw, Info } from "lucide-react";
+import { Database, Plus, Search, Trash2, ExternalLink, RefreshCw, Info, SquareArrowOutUpRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -252,6 +252,21 @@ export const DatabasesManagement = () => {
                   </TableCell>
                   <TableCell className="text-right">
                     <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground hover:bg-muted"
+                        onClick={() => {
+                          const siteDomain = getSiteDomain(db.site_id);
+                          const adminUrl = db.db_type === "postgresql" 
+                            ? `https://pgadmin.${siteDomain}` 
+                            : `https://phpmyadmin.${siteDomain}`;
+                          window.open(adminUrl, "_blank");
+                        }}
+                        title={db.db_type === "postgresql" ? "Open pgAdmin" : "Open phpMyAdmin"}
+                      >
+                        <SquareArrowOutUpRight className="w-4 h-4" />
+                      </Button>
                       <Button
                         variant="ghost"
                         size="icon"
