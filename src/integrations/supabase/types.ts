@@ -14,6 +14,53 @@ export type Database = {
   }
   public: {
     Tables: {
+      activity_logs: {
+        Row: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at: string
+          description: string | null
+          id: string
+          ip_address: string | null
+          metadata: Json | null
+          site_id: string | null
+          title: string
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          activity_type: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          site_id?: string | null
+          title: string
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          activity_type?: Database["public"]["Enums"]["activity_type"]
+          created_at?: string
+          description?: string | null
+          id?: string
+          ip_address?: string | null
+          metadata?: Json | null
+          site_id?: string | null
+          title?: string
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "activity_logs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backup_schedules: {
         Row: {
           backup_type: Database["public"]["Enums"]["backup_type"]
@@ -268,6 +315,26 @@ export type Database = {
       }
     }
     Enums: {
+      activity_type:
+        | "login"
+        | "logout"
+        | "site_created"
+        | "site_updated"
+        | "site_deleted"
+        | "database_created"
+        | "database_deleted"
+        | "backup_created"
+        | "backup_restored"
+        | "backup_deleted"
+        | "file_uploaded"
+        | "file_deleted"
+        | "file_modified"
+        | "user_invited"
+        | "user_removed"
+        | "role_changed"
+        | "settings_updated"
+        | "password_changed"
+        | "security_alert"
       backup_frequency: "daily" | "weekly" | "monthly"
       backup_status: "pending" | "in_progress" | "completed" | "failed"
       backup_type: "full" | "files" | "database" | "scheduled"
@@ -402,6 +469,27 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      activity_type: [
+        "login",
+        "logout",
+        "site_created",
+        "site_updated",
+        "site_deleted",
+        "database_created",
+        "database_deleted",
+        "backup_created",
+        "backup_restored",
+        "backup_deleted",
+        "file_uploaded",
+        "file_deleted",
+        "file_modified",
+        "user_invited",
+        "user_removed",
+        "role_changed",
+        "settings_updated",
+        "password_changed",
+        "security_alert",
+      ],
       backup_frequency: ["daily", "weekly", "monthly"],
       backup_status: ["pending", "in_progress", "completed", "failed"],
       backup_type: ["full", "files", "database", "scheduled"],
