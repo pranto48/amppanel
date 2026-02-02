@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, Server } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Server, Settings, Loader2 } from "lucide-react";
 import { z } from "zod";
 
 const authSchema = z.object({
@@ -13,12 +13,16 @@ const authSchema = z.object({
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
+const DEFAULT_ADMIN_EMAIL = "admin_amp@localhost";
+const DEFAULT_ADMIN_PASSWORD = "Amp_Password";
+
 const Auth = () => {
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [setupLoading, setSetupLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -55,6 +59,42 @@ const Auth = () => {
       }
       return false;
     }
+  };
+
+  const handleSetupAdmin = async () => {
+    setSetupLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("setup-admin");
+      
+      if (error) throw error;
+      
+      if (data.success) {
+        toast({
+          title: "Admin Setup Complete",
+          description: "Default admin account is ready. You can now log in.",
+        });
+        // Pre-fill the credentials
+        setEmail(DEFAULT_ADMIN_EMAIL);
+        setPassword(DEFAULT_ADMIN_PASSWORD);
+        setIsLogin(true);
+      } else {
+        throw new Error(data.error);
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Setup Failed",
+        description: error.message || "Failed to setup default admin.",
+      });
+    } finally {
+      setSetupLoading(false);
+    }
+  };
+
+  const handleUseDefaultCredentials = () => {
+    setEmail(DEFAULT_ADMIN_EMAIL);
+    setPassword(DEFAULT_ADMIN_PASSWORD);
+    setIsLogin(true);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -233,6 +273,55 @@ const Auth = () => {
               </span>
             </button>
           </div>
+
+          {/* Default Admin Section */}
+          {isLogin && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <p className="text-xs text-muted-foreground text-center mb-3">
+                First time installation?
+              </p>
+              <div className="flex gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={handleSetupAdmin}
+                  disabled={setupLoading}
+                  className="flex-1 text-xs"
+                >
+                  {setupLoading ? (
+                    <>
+                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                      Setting up...
+                    </>
+                  ) : (
+                    <>
+                      <Settings className="w-3 h-3 mr-1" />
+                      Setup Admin
+                    </>
+                  )}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={handleUseDefaultCredentials}
+                  className="flex-1 text-xs"
+                >
+                  Use Default Login
+                </Button>
+              </div>
+              <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
+                <p className="text-xs text-muted-foreground mb-1">Default Admin Credentials:</p>
+                <p className="text-xs font-mono text-foreground">
+                  Email: <span className="text-primary">{DEFAULT_ADMIN_EMAIL}</span>
+                </p>
+                <p className="text-xs font-mono text-foreground">
+                  Password: <span className="text-primary">{DEFAULT_ADMIN_PASSWORD}</span>
+                </p>
+              </div>
+            </div>
+          )}
         </div>
 
         <p className="text-center text-sm text-muted-foreground mt-6">
