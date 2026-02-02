@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      backups: {
+        Row: {
+          backup_type: Database["public"]["Enums"]["backup_type"]
+          completed_at: string | null
+          created_at: string
+          expires_at: string | null
+          file_path: string | null
+          id: string
+          name: string
+          notes: string | null
+          site_id: string
+          size_mb: number
+          status: Database["public"]["Enums"]["backup_status"]
+        }
+        Insert: {
+          backup_type?: Database["public"]["Enums"]["backup_type"]
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          file_path?: string | null
+          id?: string
+          name: string
+          notes?: string | null
+          site_id: string
+          size_mb?: number
+          status?: Database["public"]["Enums"]["backup_status"]
+        }
+        Update: {
+          backup_type?: Database["public"]["Enums"]["backup_type"]
+          completed_at?: string | null
+          created_at?: string
+          expires_at?: string | null
+          file_path?: string | null
+          id?: string
+          name?: string
+          notes?: string | null
+          site_id?: string
+          size_mb?: number
+          status?: Database["public"]["Enums"]["backup_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backups_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       databases: {
         Row: {
           created_at: string
@@ -168,6 +218,8 @@ export type Database = {
       }
     }
     Enums: {
+      backup_status: "pending" | "in_progress" | "completed" | "failed"
+      backup_type: "full" | "files" | "database" | "scheduled"
       db_type: "mysql" | "postgresql" | "mariadb"
       site_role: "owner" | "admin" | "developer" | "viewer"
       site_status: "active" | "pending" | "suspended" | "error"
@@ -299,6 +351,8 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      backup_status: ["pending", "in_progress", "completed", "failed"],
+      backup_type: ["full", "files", "database", "scheduled"],
       db_type: ["mysql", "postgresql", "mariadb"],
       site_role: ["owner", "admin", "developer", "viewer"],
       site_status: ["active", "pending", "suspended", "error"],

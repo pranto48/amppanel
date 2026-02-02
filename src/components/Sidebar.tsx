@@ -12,7 +12,8 @@ import {
   Activity,
   LogOut,
   Upload,
-  Layers
+  Layers,
+  Archive
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -30,6 +31,7 @@ const menuItems = [
   { id: "databases", label: "Databases", icon: Database },
   { id: "files", label: "File Manager", icon: FolderOpen },
   { id: "ftp", label: "FTP Accounts", icon: Upload },
+  { id: "backups", label: "Backups", icon: Archive },
   { id: "users", label: "Users", icon: Users },
   { id: "email", label: "Email", icon: Mail },
   { id: "dns", label: "DNS Manager", icon: HardDrive },
