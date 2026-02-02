@@ -30,6 +30,8 @@ interface SidebarProps {
   onItemClick: (item: string) => void;
   isOpen?: boolean;
   onClose?: () => void;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
 const menuItems = [
@@ -50,8 +52,14 @@ const menuItems = [
   { id: "settings", label: "Settings", icon: Settings },
 ];
 
-export const Sidebar = ({ activeItem, onItemClick, isOpen, onClose }: SidebarProps) => {
-  const [collapsed, setCollapsed] = useState(false);
+export const Sidebar = ({ 
+  activeItem, 
+  onItemClick, 
+  isOpen, 
+  onClose,
+  collapsed = false,
+  onCollapsedChange
+}: SidebarProps) => {
   const { signOut } = useAuth();
   const navigate = useNavigate();
 
@@ -63,6 +71,10 @@ export const Sidebar = ({ activeItem, onItemClick, isOpen, onClose }: SidebarPro
   const handleItemClick = (id: string) => {
     onItemClick(id);
     onClose?.();
+  };
+
+  const toggleCollapsed = () => {
+    onCollapsedChange?.(!collapsed);
   };
 
   return (
@@ -106,7 +118,7 @@ export const Sidebar = ({ activeItem, onItemClick, isOpen, onClose }: SidebarPro
         <Button
           variant="ghost"
           size="icon"
-          onClick={() => setCollapsed(!collapsed)}
+          onClick={toggleCollapsed}
           className="h-8 w-8 hover:bg-primary/10 hover:text-primary transition-all duration-200"
         >
           <div className="transition-transform duration-300">
