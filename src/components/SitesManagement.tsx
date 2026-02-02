@@ -20,6 +20,7 @@ import { useSites, useDeleteSite, useUpdateSite } from "@/hooks/useSites";
 import { AddSiteDialog } from "@/components/AddSiteDialog";
 import { EditSiteDialog } from "@/components/EditSiteDialog";
 import { useToast } from "@/hooks/use-toast";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import {
@@ -61,6 +62,7 @@ export const SitesManagement = () => {
   const deleteSite = useDeleteSite();
   const updateSite = useUpdateSite();
   const { toast } = useToast();
+  const { logSiteDeleted, logSiteUpdated } = useLogActivity();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
@@ -69,6 +71,10 @@ export const SitesManagement = () => {
   const handleDelete = async (id: string, domain: string) => {
     try {
       await deleteSite.mutateAsync(id);
+      
+      // Log activity
+      logSiteDeleted(domain);
+      
       toast({
         title: "Site deleted",
         description: `${domain} has been removed.`,
@@ -88,6 +94,10 @@ export const SitesManagement = () => {
         id: site.id,
         ssl_enabled: !site.ssl_enabled,
       });
+      
+      // Log activity
+      logSiteUpdated(site.domain, site.id, { ssl_enabled: !site.ssl_enabled });
+      
       toast({
         title: site.ssl_enabled ? "SSL disabled" : "SSL enabled",
         description: `SSL has been ${site.ssl_enabled ? "disabled" : "enabled"} for ${site.domain}.`,

@@ -31,6 +31,7 @@ import {
 import { useCreateDatabase } from "@/hooks/useDatabases";
 import { useSites } from "@/hooks/useSites";
 import { useToast } from "@/hooks/use-toast";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 
 const databaseSchema = z.object({
   name: z
@@ -65,6 +66,7 @@ export const AddDatabaseDialog = ({ open, onOpenChange }: AddDatabaseDialogProps
   const { data: sites, isLoading: sitesLoading } = useSites();
   const createDatabase = useCreateDatabase();
   const { toast } = useToast();
+  const { logDatabaseCreated } = useLogActivity();
 
   const form = useForm<DatabaseFormData>({
     resolver: zodResolver(databaseSchema),
@@ -104,6 +106,9 @@ export const AddDatabaseDialog = ({ open, onOpenChange }: AddDatabaseDialogProps
         db_charset: data.db_charset,
         db_collation: data.db_collation,
       });
+
+      // Log activity
+      logDatabaseCreated(data.name, data.site_id);
 
       toast({
         title: "Database created",

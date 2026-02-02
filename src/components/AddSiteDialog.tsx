@@ -6,6 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useCreateSite } from "@/hooks/useSites";
 import { useToast } from "@/hooks/use-toast";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 import { Plus, Globe, Loader2 } from "lucide-react";
 
 interface AddSiteDialogProps {
@@ -19,6 +20,7 @@ export const AddSiteDialog = ({ children }: AddSiteDialogProps) => {
   const [phpVersion, setPhpVersion] = useState("8.2");
   const createSite = useCreateSite();
   const { toast } = useToast();
+  const { logSiteCreated } = useLogActivity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,11 +35,14 @@ export const AddSiteDialog = ({ children }: AddSiteDialogProps) => {
     }
 
     try {
-      await createSite.mutateAsync({
+      const result = await createSite.mutateAsync({
         domain: domain.trim(),
         site_type: siteType,
         php_version: siteType === "php" || siteType === "wordpress" ? phpVersion : null,
       });
+
+      // Log activity
+      logSiteCreated(domain.trim(), result.id);
 
       toast({
         title: "Site created!",
