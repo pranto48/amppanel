@@ -10,6 +10,7 @@ import { SystemServices } from "@/components/SystemServices";
 import { ResourceChart } from "@/components/ResourceChart";
 import { RecentActivity } from "@/components/RecentActivity";
 import { SitesManagement } from "@/components/SitesManagement";
+import { DatabasesManagement } from "@/components/DatabasesManagement";
 import { FileManager } from "@/components/FileManager";
 import { Terminal } from "@/components/Terminal";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,6 +47,8 @@ const Index = () => {
     switch (activeItem) {
       case "sites":
         return <SitesManagement />;
+      case "databases":
+        return <DatabasesManagement />;
       case "files":
         return <FileManager />;
       case "terminal":
