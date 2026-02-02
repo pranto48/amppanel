@@ -9,6 +9,7 @@ import { SitesTable } from "@/components/SitesTable";
 import { SystemServices } from "@/components/SystemServices";
 import { ResourceChart } from "@/components/ResourceChart";
 import { RecentActivity } from "@/components/RecentActivity";
+import { SitesManagement } from "@/components/SitesManagement";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -39,6 +40,85 @@ const Index = () => {
     return null;
   }
 
+  const renderContent = () => {
+    switch (activeItem) {
+      case "sites":
+        return <SitesManagement />;
+      case "dashboard":
+      default:
+        return (
+          <>
+            {/* Page title */}
+            <div className="mb-6">
+              <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
+              <p className="text-muted-foreground">Welcome back, {user.email}!</p>
+            </div>
+
+            {/* Stats grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+              <StatCard 
+                title="CPU Usage"
+                value="42%"
+                subtitle="4 Cores @ 3.2 GHz"
+                icon={Cpu}
+                percentage={42}
+                color="primary"
+              />
+              <StatCard 
+                title="Memory"
+                value="6.2 GB"
+                subtitle="of 16 GB total"
+                icon={MemoryStick}
+                percentage={39}
+                color="success"
+              />
+              <StatCard 
+                title="Disk Usage"
+                value="124 GB"
+                subtitle="of 500 GB total"
+                icon={HardDrive}
+                percentage={25}
+                color="warning"
+              />
+              <StatCard 
+                title="Network"
+                value="1.2 Gb/s"
+                subtitle="45 TB transferred"
+                icon={Network}
+                percentage={65}
+                color="info"
+              />
+            </div>
+
+            {/* Quick actions */}
+            <div className="mb-6">
+              <QuickActions />
+            </div>
+
+            {/* Charts and Services */}
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+              <div className="lg:col-span-2">
+                <ResourceChart />
+              </div>
+              <div>
+                <SystemServices />
+              </div>
+            </div>
+
+            {/* Sites table and Activity */}
+            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+              <div className="xl:col-span-2">
+                <SitesTable />
+              </div>
+              <div>
+                <RecentActivity />
+              </div>
+            </div>
+          </>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen bg-background">
       {/* Mobile sidebar overlay */}
@@ -62,72 +142,7 @@ const Index = () => {
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
         <main className="p-6">
-          {/* Page title */}
-          <div className="mb-6">
-            <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-            <p className="text-muted-foreground">Welcome back, {user.email}!</p>
-          </div>
-
-          {/* Stats grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-            <StatCard 
-              title="CPU Usage"
-              value="42%"
-              subtitle="4 Cores @ 3.2 GHz"
-              icon={Cpu}
-              percentage={42}
-              color="primary"
-            />
-            <StatCard 
-              title="Memory"
-              value="6.2 GB"
-              subtitle="of 16 GB total"
-              icon={MemoryStick}
-              percentage={39}
-              color="success"
-            />
-            <StatCard 
-              title="Disk Usage"
-              value="124 GB"
-              subtitle="of 500 GB total"
-              icon={HardDrive}
-              percentage={25}
-              color="warning"
-            />
-            <StatCard 
-              title="Network"
-              value="1.2 Gb/s"
-              subtitle="45 TB transferred"
-              icon={Network}
-              percentage={65}
-              color="info"
-            />
-          </div>
-
-          {/* Quick actions */}
-          <div className="mb-6">
-            <QuickActions />
-          </div>
-
-          {/* Charts and Services */}
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-            <div className="lg:col-span-2">
-              <ResourceChart />
-            </div>
-            <div>
-              <SystemServices />
-            </div>
-          </div>
-
-          {/* Sites table and Activity */}
-          <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-            <div className="xl:col-span-2">
-              <SitesTable />
-            </div>
-            <div>
-              <RecentActivity />
-            </div>
-          </div>
+          {renderContent()}
         </main>
       </div>
     </div>
