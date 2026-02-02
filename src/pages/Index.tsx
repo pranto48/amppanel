@@ -22,20 +22,32 @@ import { FTPManager } from "@/components/FTPManager";
 import { SubdomainManager } from "@/components/SubdomainManager";
 import { BackupsManagement } from "@/components/BackupsManagement";
 import { SettingsPage } from "@/components/SettingsPage";
+import { ActivityLogsPage } from "@/components/ActivityLogsPage";
 import { useAuth } from "@/hooks/useAuth";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 import { cn } from "@/lib/utils";
 
 const Index = () => {
   const [activeItem, setActiveItem] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [hasLoggedLogin, setHasLoggedLogin] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
+  const { logLogin } = useLogActivity();
 
   useEffect(() => {
     if (!loading && !user) {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
+
+  // Log login activity once when user is authenticated
+  useEffect(() => {
+    if (user && !hasLoggedLogin) {
+      logLogin();
+      setHasLoggedLogin(true);
+    }
+  }, [user, hasLoggedLogin, logLogin]);
 
   if (loading) {
     return (
@@ -76,6 +88,8 @@ const Index = () => {
         return <DNSManager />;
       case "monitoring":
         return <MonitoringPage />;
+      case "activity":
+        return <ActivityLogsPage />;
       case "settings":
         return <SettingsPage />;
       case "dashboard":

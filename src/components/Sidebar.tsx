@@ -17,7 +17,8 @@ import {
   Archive,
   ChevronLeft,
   ChevronRight,
-  X
+  X,
+  ClipboardList
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -44,6 +45,7 @@ const menuItems = [
   { id: "dns", label: "DNS Manager", icon: HardDrive },
   { id: "security", label: "Security", icon: Shield },
   { id: "monitoring", label: "Monitoring", icon: Activity },
+  { id: "activity", label: "Activity Logs", icon: ClipboardList },
   { id: "terminal", label: "Terminal", icon: Terminal },
   { id: "settings", label: "Settings", icon: Settings },
 ];
