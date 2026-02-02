@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      backup_schedules: {
+        Row: {
+          backup_type: Database["public"]["Enums"]["backup_type"]
+          created_at: string
+          frequency: Database["public"]["Enums"]["backup_frequency"]
+          id: string
+          is_enabled: boolean
+          last_run_at: string | null
+          name: string
+          next_run_at: string | null
+          retention_days: number
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          backup_type?: Database["public"]["Enums"]["backup_type"]
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["backup_frequency"]
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          name: string
+          next_run_at?: string | null
+          retention_days?: number
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          backup_type?: Database["public"]["Enums"]["backup_type"]
+          created_at?: string
+          frequency?: Database["public"]["Enums"]["backup_frequency"]
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          name?: string
+          next_run_at?: string | null
+          retention_days?: number
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_schedules_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       backups: {
         Row: {
           backup_type: Database["public"]["Enums"]["backup_type"]
@@ -218,6 +268,7 @@ export type Database = {
       }
     }
     Enums: {
+      backup_frequency: "daily" | "weekly" | "monthly"
       backup_status: "pending" | "in_progress" | "completed" | "failed"
       backup_type: "full" | "files" | "database" | "scheduled"
       db_type: "mysql" | "postgresql" | "mariadb"
@@ -351,6 +402,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      backup_frequency: ["daily", "weekly", "monthly"],
       backup_status: ["pending", "in_progress", "completed", "failed"],
       backup_type: ["full", "files", "database", "scheduled"],
       db_type: ["mysql", "postgresql", "mariadb"],
