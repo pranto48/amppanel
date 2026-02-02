@@ -64,6 +64,7 @@ import { useBackups, useCreateBackup, useDeleteBackup, useRestoreBackup, type Ba
 import { useBackupSchedules, useCreateBackupSchedule, useUpdateBackupSchedule, useDeleteBackupSchedule, type BackupSchedule } from "@/hooks/useBackupSchedules";
 import { useSites } from "@/hooks/useSites";
 import { useToast } from "@/hooks/use-toast";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 const backupTypeConfig = {
   full: {
@@ -139,6 +140,7 @@ export const BackupsManagement = () => {
   const updateSchedule = useUpdateBackupSchedule();
   const deleteSchedule = useDeleteBackupSchedule();
   const { toast } = useToast();
+  const { notifyBackupComplete, notifyBackupFailed, notifyScheduledBackup } = useNotifications();
 
   const getSiteDomain = (siteId: string) => {
     const site = sites?.find((s) => s.id === siteId);
@@ -161,17 +163,26 @@ export const BackupsManagement = () => {
       return;
     }
 
+    const siteDomain = getSiteDomain(newBackup.siteId);
+
     try {
-      await createBackup.mutateAsync({
+      const result = await createBackup.mutateAsync({
         site_id: newBackup.siteId,
         name: newBackup.name,
         backup_type: newBackup.type,
         notes: newBackup.notes || undefined,
       });
+      
+      // Send in-app notification
+      notifyBackupComplete(newBackup.name, siteDomain, result.id, newBackup.siteId);
+      
       toast({ title: "Backup created", description: `Backup "${newBackup.name}" has been created successfully.` });
       setIsCreateDialogOpen(false);
       setNewBackup({ siteId: "", name: "", type: "full", notes: "" });
     } catch (error: any) {
+      // Send failure notification
+      notifyBackupFailed(newBackup.name, siteDomain, error.message);
+      
       toast({ variant: "destructive", title: "Error", description: error.message || "Failed to create backup." });
     }
   };
@@ -182,6 +193,9 @@ export const BackupsManagement = () => {
       return;
     }
 
+    const siteDomain = getSiteDomain(newSchedule.siteId);
+    const frequencyLabel = frequencyConfig[newSchedule.frequency].description;
+
     try {
       await createSchedule.mutateAsync({
         site_id: newSchedule.siteId,
@@ -190,6 +204,10 @@ export const BackupsManagement = () => {
         backup_type: newSchedule.backupType,
         retention_days: newSchedule.retentionDays,
       });
+      
+      // Send notification about new schedule
+      notifyScheduledBackup(newSchedule.name, siteDomain, frequencyLabel);
+      
       toast({ title: "Schedule created", description: `Backup schedule "${newSchedule.name}" has been created.` });
       setIsScheduleDialogOpen(false);
       setNewSchedule({ siteId: "", name: "", frequency: "daily", backupType: "full", retentionDays: 30 });

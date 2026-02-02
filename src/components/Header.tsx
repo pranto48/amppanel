@@ -1,10 +1,21 @@
-import { Bell, Search, User, Menu } from "lucide-react";
+import { Search, User, Menu } from "lucide-react";
+import { NotificationCenter } from "@/components/NotificationCenter";
+import { useNotifications } from "@/contexts/NotificationContext";
 
 interface HeaderProps {
   onMenuClick: () => void;
 }
 
 export const Header = ({ onMenuClick }: HeaderProps) => {
+  const {
+    notifications,
+    unreadCount,
+    markAsRead,
+    markAllAsRead,
+    clearNotification,
+    clearAll,
+  } = useNotifications();
+
   return (
     <header className="sticky top-0 z-30 h-16 bg-background/80 backdrop-blur-xl border-b border-border flex items-center justify-between px-6">
       <div className="flex items-center gap-4">
@@ -33,10 +44,14 @@ export const Header = ({ onMenuClick }: HeaderProps) => {
         </div>
 
         {/* Notifications */}
-        <button className="relative p-2.5 rounded-lg bg-secondary hover:bg-muted transition-colors">
-          <Bell className="w-5 h-5 text-muted-foreground" />
-          <span className="absolute top-1.5 right-1.5 w-2 h-2 bg-destructive rounded-full" />
-        </button>
+        <NotificationCenter
+          notifications={notifications}
+          unreadCount={unreadCount}
+          onMarkAsRead={markAsRead}
+          onMarkAllAsRead={markAllAsRead}
+          onClear={clearNotification}
+          onClearAll={clearAll}
+        />
 
         {/* User */}
         <button className="flex items-center gap-3 pl-3 pr-4 py-2 rounded-lg bg-secondary hover:bg-muted transition-colors">
