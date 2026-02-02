@@ -11,6 +11,7 @@ import { ResourceChart } from "@/components/ResourceChart";
 import { RecentActivity } from "@/components/RecentActivity";
 import { SitesManagement } from "@/components/SitesManagement";
 import { FileManager } from "@/components/FileManager";
+import { Terminal } from "@/components/Terminal";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -47,6 +48,8 @@ const Index = () => {
         return <SitesManagement />;
       case "files":
         return <FileManager />;
+      case "terminal":
+        return <Terminal />;
       case "dashboard":
       default:
         return (
