@@ -456,6 +456,68 @@ export type Database = {
         }
         Relationships: []
       }
+      system_metrics: {
+        Row: {
+          cpu_percent: number
+          created_at: string
+          disk_total_gb: number
+          disk_used_gb: number
+          id: string
+          load_avg_15m: number | null
+          load_avg_1m: number | null
+          load_avg_5m: number | null
+          memory_total_mb: number
+          memory_used_mb: number
+          network_in_mbps: number
+          network_out_mbps: number
+          recorded_at: string
+          site_id: string | null
+          uptime_seconds: number | null
+        }
+        Insert: {
+          cpu_percent?: number
+          created_at?: string
+          disk_total_gb?: number
+          disk_used_gb?: number
+          id?: string
+          load_avg_15m?: number | null
+          load_avg_1m?: number | null
+          load_avg_5m?: number | null
+          memory_total_mb?: number
+          memory_used_mb?: number
+          network_in_mbps?: number
+          network_out_mbps?: number
+          recorded_at?: string
+          site_id?: string | null
+          uptime_seconds?: number | null
+        }
+        Update: {
+          cpu_percent?: number
+          created_at?: string
+          disk_total_gb?: number
+          disk_used_gb?: number
+          id?: string
+          load_avg_15m?: number | null
+          load_avg_1m?: number | null
+          load_avg_5m?: number | null
+          memory_total_mb?: number
+          memory_used_mb?: number
+          network_in_mbps?: number
+          network_out_mbps?: number
+          recorded_at?: string
+          site_id?: string | null
+          uptime_seconds?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_metrics_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       user_2fa: {
         Row: {
           backup_codes: string[] | null
@@ -512,6 +574,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      cleanup_old_metrics: { Args: never; Returns: undefined }
       get_site_role: {
         Args: { _site_id: string; _user_id: string }
         Returns: Database["public"]["Enums"]["site_role"]
