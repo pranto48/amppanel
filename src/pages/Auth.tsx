@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { Eye, EyeOff, Mail, Lock, Server, Settings, Loader2 } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, Server, Settings, Loader2, ShieldCheck } from "lucide-react";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { z } from "zod";
 
 // Custom email validation that allows localhost for admin accounts
@@ -35,24 +36,31 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [setupLoading, setSetupLoading] = useState(false);
   const [errors, setErrors] = useState<{ email?: string; password?: string }>({});
+  
+  // 2FA state
+  const [requires2FA, setRequires2FA] = useState(false);
+  const [otpCode, setOtpCode] = useState("");
+  const [verifying2FA, setVerifying2FA] = useState(false);
+  
   const navigate = useNavigate();
   const { toast } = useToast();
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session?.user) {
+      // Only auto-navigate if not waiting for 2FA
+      if (session?.user && !requires2FA) {
         navigate("/");
       }
     });
 
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
+      if (session?.user && !requires2FA) {
         navigate("/");
       }
     });
 
     return () => subscription.unsubscribe();
-  }, [navigate]);
+  }, [navigate, requires2FA]);
 
   const validateForm = () => {
     try {
@@ -108,6 +116,34 @@ const Auth = () => {
     setIsLogin(true);
   };
 
+  const check2FARequired = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("totp", {
+        body: { action: "status" },
+      });
+      
+      if (error) throw error;
+      return data?.enabled || false;
+    } catch (error) {
+      console.error("Error checking 2FA status:", error);
+      return false;
+    }
+  };
+
+  const verify2FACode = async (): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("totp", {
+        body: { action: "validate", code: otpCode },
+      });
+      
+      if (error) throw error;
+      return data?.valid || false;
+    } catch (error) {
+      console.error("Error validating 2FA:", error);
+      return false;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -137,10 +173,22 @@ const Auth = () => {
             });
           }
         } else {
-          toast({
-            title: "Welcome back!",
-            description: "You have been logged in successfully.",
-          });
+          // Check if 2FA is enabled
+          const has2FA = await check2FARequired();
+          
+          if (has2FA) {
+            setRequires2FA(true);
+            toast({
+              title: "2FA Required",
+              description: "Please enter your verification code.",
+            });
+          } else {
+            toast({
+              title: "Welcome back!",
+              description: "You have been logged in successfully.",
+            });
+            navigate("/");
+          }
         }
       } else {
         const { error } = await supabase.auth.signUp({
@@ -182,6 +230,131 @@ const Auth = () => {
       setLoading(false);
     }
   };
+
+  const handle2FAVerify = async () => {
+    if (otpCode.length !== 6) {
+      toast({
+        variant: "destructive",
+        title: "Invalid Code",
+        description: "Please enter a 6-digit verification code.",
+      });
+      return;
+    }
+
+    setVerifying2FA(true);
+    
+    try {
+      const isValid = await verify2FACode();
+      
+      if (isValid) {
+        toast({
+          title: "Welcome back!",
+          description: "2FA verification successful.",
+        });
+        setRequires2FA(false);
+        navigate("/");
+      } else {
+        toast({
+          variant: "destructive",
+          title: "Invalid Code",
+          description: "The verification code is incorrect. Please try again.",
+        });
+        setOtpCode("");
+      }
+    } catch (error: any) {
+      toast({
+        variant: "destructive",
+        title: "Verification Failed",
+        description: error.message || "Failed to verify code.",
+      });
+    } finally {
+      setVerifying2FA(false);
+    }
+  };
+
+  const handleCancel2FA = async () => {
+    await supabase.auth.signOut();
+    setRequires2FA(false);
+    setOtpCode("");
+    toast({
+      title: "Logged out",
+      description: "You can try logging in again.",
+    });
+  };
+
+  // 2FA Verification UI
+  if (requires2FA) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="fixed inset-0 overflow-hidden pointer-events-none">
+          <div className="absolute top-1/4 -left-1/4 w-1/2 h-1/2 bg-primary/5 rounded-full blur-3xl" />
+          <div className="absolute bottom-1/4 -right-1/4 w-1/2 h-1/2 bg-info/5 rounded-full blur-3xl" />
+        </div>
+
+        <div className="w-full max-w-md relative z-10">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-3 mb-4">
+              <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-primary to-info flex items-center justify-center">
+                <ShieldCheck className="w-7 h-7 text-primary-foreground" />
+              </div>
+            </div>
+            <h1 className="text-3xl font-bold text-foreground">Two-Factor Authentication</h1>
+            <p className="text-muted-foreground mt-2">Enter the code from your authenticator app</p>
+          </div>
+
+          <div className="glass-card rounded-2xl p-8">
+            <div className="space-y-6">
+              <div className="flex justify-center">
+                <InputOTP
+                  maxLength={6}
+                  value={otpCode}
+                  onChange={(value) => setOtpCode(value)}
+                >
+                  <InputOTPGroup>
+                    <InputOTPSlot index={0} />
+                    <InputOTPSlot index={1} />
+                    <InputOTPSlot index={2} />
+                    <InputOTPSlot index={3} />
+                    <InputOTPSlot index={4} />
+                    <InputOTPSlot index={5} />
+                  </InputOTPGroup>
+                </InputOTP>
+              </div>
+
+              <p className="text-sm text-muted-foreground text-center">
+                You can also use a backup code if you don't have access to your authenticator app.
+              </p>
+
+              <div className="space-y-3">
+                <Button
+                  onClick={handle2FAVerify}
+                  disabled={verifying2FA || otpCode.length !== 6}
+                  className="w-full bg-gradient-to-r from-primary to-info hover:opacity-90 text-primary-foreground font-medium py-5"
+                >
+                  {verifying2FA ? (
+                    <div className="flex items-center gap-2">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Verifying...
+                    </div>
+                  ) : (
+                    "Verify"
+                  )}
+                </Button>
+
+                <Button
+                  variant="ghost"
+                  onClick={handleCancel2FA}
+                  className="w-full"
+                >
+                  Cancel and go back
+                </Button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
