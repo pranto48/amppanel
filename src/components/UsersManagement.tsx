@@ -85,7 +85,7 @@ const roleConfig: Record<SiteRole, { label: string; icon: typeof Crown; color: s
 
 export const UsersManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSite, setSelectedSite] = useState<string>("");
+  const [selectedSite, setSelectedSite] = useState<string>("all");
   const [isInviteDialogOpen, setIsInviteDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [selectedMember, setSelectedMember] = useState<Tables<"site_members"> | null>(null);
@@ -94,7 +94,7 @@ export const UsersManagement = () => {
   const [inviteSiteId, setInviteSiteId] = useState("");
 
   const { data: sites } = useSites();
-  const { data: members, isLoading, refetch } = useSiteMembers(selectedSite || undefined);
+  const { data: members, isLoading, refetch } = useSiteMembers(selectedSite === "all" ? undefined : selectedSite);
   const addMember = useAddSiteMember();
   const updateRole = useUpdateSiteMemberRole();
   const removeMember = useRemoveSiteMember();
@@ -245,7 +245,7 @@ export const UsersManagement = () => {
             <SelectValue placeholder="Filter by site" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="">All Sites</SelectItem>
+            <SelectItem value="all">All Sites</SelectItem>
             {sites?.map((site) => (
               <SelectItem key={site.id} value={site.id}>
                 {site.domain}
