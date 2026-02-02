@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { useUpdateSite } from "@/hooks/useSites";
 import { useToast } from "@/hooks/use-toast";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 import { Settings, Loader2, Shield, Server } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -28,9 +29,24 @@ export const EditSiteDialog = ({ site, open, onOpenChange }: EditSiteDialogProps
   
   const updateSite = useUpdateSite();
   const { toast } = useToast();
+  const { logSiteUpdated } = useLogActivity();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    const changes = {
+      php_version: phpVersion !== site.php_version ? phpVersion : undefined,
+      ssl_enabled: sslEnabled !== site.ssl_enabled ? sslEnabled : undefined,
+      storage_limit_mb: parseInt(storageLimit) !== site.storage_limit_mb ? parseInt(storageLimit) : undefined,
+      bandwidth_limit_gb: parseInt(bandwidthLimit) !== site.bandwidth_limit_gb ? parseInt(bandwidthLimit) : undefined,
+      document_root: documentRoot !== site.document_root ? documentRoot : undefined,
+      status: status !== site.status ? status : undefined,
+    };
+
+    // Filter out undefined values
+    const actualChanges = Object.fromEntries(
+      Object.entries(changes).filter(([_, v]) => v !== undefined)
+    );
 
     try {
       await updateSite.mutateAsync({
@@ -42,6 +58,11 @@ export const EditSiteDialog = ({ site, open, onOpenChange }: EditSiteDialogProps
         document_root: documentRoot,
         status: status,
       });
+
+      // Log activity with changes
+      if (Object.keys(actualChanges).length > 0) {
+        logSiteUpdated(site.domain, site.id, actualChanges);
+      }
 
       toast({
         title: "Site updated!",

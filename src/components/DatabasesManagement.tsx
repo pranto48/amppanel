@@ -26,6 +26,7 @@ import { useSites } from "@/hooks/useSites";
 import { AddDatabaseDialog } from "@/components/AddDatabaseDialog";
 import { DatabaseConnectionModal } from "@/components/DatabaseConnectionModal";
 import { useToast } from "@/hooks/use-toast";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 import type { Tables } from "@/integrations/supabase/types";
 
 type DatabaseType = Tables<"databases">;
@@ -41,6 +42,7 @@ export const DatabasesManagement = () => {
   const { data: sites } = useSites();
   const deleteDatabase = useDeleteDatabase();
   const { toast } = useToast();
+  const { logDatabaseDeleted } = useLogActivity();
 
   const getSiteDomain = (siteId: string) => {
     const site = sites?.find((s) => s.id === siteId);
@@ -72,6 +74,10 @@ export const DatabasesManagement = () => {
 
     try {
       await deleteDatabase.mutateAsync(selectedDatabase.id);
+      
+      // Log activity
+      logDatabaseDeleted(selectedDatabase.name, selectedDatabase.site_id);
+      
       toast({
         title: "Database deleted",
         description: `Database "${selectedDatabase.name}" has been deleted.`,

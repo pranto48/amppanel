@@ -65,6 +65,7 @@ import { useBackupSchedules, useCreateBackupSchedule, useUpdateBackupSchedule, u
 import { useSites } from "@/hooks/useSites";
 import { useToast } from "@/hooks/use-toast";
 import { useNotifications } from "@/contexts/NotificationContext";
+import { useLogActivity } from "@/hooks/useActivityLogs";
 
 const backupTypeConfig = {
   full: {
@@ -141,6 +142,7 @@ export const BackupsManagement = () => {
   const deleteSchedule = useDeleteBackupSchedule();
   const { toast } = useToast();
   const { notifyBackupComplete, notifyBackupFailed, notifyScheduledBackup } = useNotifications();
+  const { logBackupCreated, logBackupRestored } = useLogActivity();
 
   const getSiteDomain = (siteId: string) => {
     const site = sites?.find((s) => s.id === siteId);
@@ -172,6 +174,9 @@ export const BackupsManagement = () => {
         backup_type: newBackup.type,
         notes: newBackup.notes || undefined,
       });
+      
+      // Log activity
+      logBackupCreated(newBackup.name, newBackup.siteId, newBackup.type);
       
       // Send in-app notification
       notifyBackupComplete(newBackup.name, siteDomain, result.id, newBackup.siteId);
@@ -258,6 +263,10 @@ export const BackupsManagement = () => {
     if (!selectedBackup) return;
     try {
       await restoreBackup.mutateAsync(selectedBackup.id);
+      
+      // Log activity
+      logBackupRestored(selectedBackup.name, selectedBackup.site_id);
+      
       toast({ title: "Restore complete", description: `Site has been restored from backup "${selectedBackup.name}".` });
     } catch (error: any) {
       toast({ variant: "destructive", title: "Error", description: error.message || "Failed to restore backup." });
