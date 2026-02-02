@@ -8,8 +8,19 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, Server, Settings, Loader2 } from "lucide-react";
 import { z } from "zod";
 
+// Custom email validation that allows localhost for admin accounts
+const emailSchema = z.string().refine(
+  (email) => {
+    // Allow admin_amp@localhost specifically
+    if (email === "admin_amp@localhost") return true;
+    // Standard email validation for other emails
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+  },
+  { message: "Please enter a valid email address" }
+);
+
 const authSchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
+  email: emailSchema,
   password: z.string().min(6, "Password must be at least 6 characters"),
 });
 
