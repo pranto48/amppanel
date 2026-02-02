@@ -26,7 +26,90 @@ import { ActivityLogsPage } from "@/components/ActivityLogsPage";
 import { EmailManagement } from "@/components/EmailManagement";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogActivity } from "@/hooks/useActivityLogs";
+import { useLatestMetrics, formatBytes } from "@/hooks/useSystemMetrics";
 import { cn } from "@/lib/utils";
+
+// Dashboard content component with real metrics
+const DashboardContent = ({ user, setActiveItem }: { user: any; setActiveItem: (item: string) => void }) => {
+  const { data: metrics } = useLatestMetrics();
+
+  const cpuPercent = Math.round(metrics?.cpu_percent || 0);
+  const memoryPercent = metrics ? Math.round((metrics.memory_used_mb / metrics.memory_total_mb) * 100) : 0;
+  const diskPercent = metrics ? Math.round((metrics.disk_used_gb / metrics.disk_total_gb) * 100) : 0;
+  const networkTotal = metrics ? metrics.network_in_mbps + metrics.network_out_mbps : 0;
+  const networkPercent = Math.min(100, Math.round(networkTotal));
+
+  return (
+    <>
+      {/* Page title */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
+        <p className="text-muted-foreground">Welcome back, {user.email}!</p>
+      </div>
+
+      {/* Stats grid */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+        <StatCard 
+          title="CPU Usage"
+          value={`${cpuPercent}%`}
+          subtitle={metrics?.load_avg_1m ? `Load: ${metrics.load_avg_1m.toFixed(2)}` : "4 Cores @ 3.2 GHz"}
+          icon={Cpu}
+          percentage={cpuPercent}
+          color="primary"
+        />
+        <StatCard 
+          title="Memory"
+          value={formatBytes(metrics?.memory_used_mb || 0)}
+          subtitle={`of ${formatBytes(metrics?.memory_total_mb || 16384)} total`}
+          icon={MemoryStick}
+          percentage={memoryPercent}
+          color="success"
+        />
+        <StatCard 
+          title="Disk Usage"
+          value={`${(metrics?.disk_used_gb || 0).toFixed(0)} GB`}
+          subtitle={`of ${(metrics?.disk_total_gb || 500).toFixed(0)} GB total`}
+          icon={HardDrive}
+          percentage={diskPercent}
+          color="warning"
+        />
+        <StatCard 
+          title="Network"
+          value={`${networkTotal.toFixed(1)} Mb/s`}
+          subtitle={`↓${(metrics?.network_in_mbps || 0).toFixed(1)} ↑${(metrics?.network_out_mbps || 0).toFixed(1)}`}
+          icon={Network}
+          percentage={networkPercent}
+          color="info"
+        />
+      </div>
+
+      {/* Quick actions */}
+      <div className="mb-6">
+        <QuickActions onNavigate={setActiveItem} />
+      </div>
+
+      {/* Charts and Services */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+        <div className="lg:col-span-2">
+          <ResourceChart />
+        </div>
+        <div>
+          <SystemServices />
+        </div>
+      </div>
+
+      {/* Sites table and Activity */}
+      <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
+        <div className="xl:col-span-2">
+          <SitesTable />
+        </div>
+        <div>
+          <RecentActivity />
+        </div>
+      </div>
+    </>
+  );
+};
 
 const Index = () => {
   const [activeItem, setActiveItem] = useState("dashboard");
@@ -98,76 +181,7 @@ const Index = () => {
         return <SettingsPage />;
       case "dashboard":
       default:
-        return (
-          <>
-            {/* Page title */}
-            <div className="mb-6">
-              <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-              <p className="text-muted-foreground">Welcome back, {user.email}!</p>
-            </div>
-
-            {/* Stats grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-              <StatCard 
-                title="CPU Usage"
-                value="42%"
-                subtitle="4 Cores @ 3.2 GHz"
-                icon={Cpu}
-                percentage={42}
-                color="primary"
-              />
-              <StatCard 
-                title="Memory"
-                value="6.2 GB"
-                subtitle="of 16 GB total"
-                icon={MemoryStick}
-                percentage={39}
-                color="success"
-              />
-              <StatCard 
-                title="Disk Usage"
-                value="124 GB"
-                subtitle="of 500 GB total"
-                icon={HardDrive}
-                percentage={25}
-                color="warning"
-              />
-              <StatCard 
-                title="Network"
-                value="1.2 Gb/s"
-                subtitle="45 TB transferred"
-                icon={Network}
-                percentage={65}
-                color="info"
-              />
-            </div>
-
-            {/* Quick actions */}
-            <div className="mb-6">
-              <QuickActions onNavigate={setActiveItem} />
-            </div>
-
-            {/* Charts and Services */}
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-              <div className="lg:col-span-2">
-                <ResourceChart />
-              </div>
-              <div>
-                <SystemServices />
-              </div>
-            </div>
-
-            {/* Sites table and Activity */}
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-              <div className="xl:col-span-2">
-                <SitesTable />
-              </div>
-              <div>
-                <RecentActivity />
-              </div>
-            </div>
-          </>
-        );
+        return <DashboardContent user={user} setActiveItem={setActiveItem} />;
     }
   };
 
