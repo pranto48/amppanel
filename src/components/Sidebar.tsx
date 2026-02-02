@@ -13,6 +13,8 @@ import {
   LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
+import { useNavigate } from "react-router-dom";
 
 interface SidebarProps {
   activeItem: string;
@@ -34,6 +36,14 @@ const menuItems = [
 ];
 
 export const Sidebar = ({ activeItem, onItemClick }: SidebarProps) => {
+  const { signOut } = useAuth();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    await signOut();
+    navigate("/auth");
+  };
+
   return (
     <aside className="fixed left-0 top-0 z-40 h-screen w-64 bg-sidebar border-r border-sidebar-border flex flex-col">
       {/* Logo */}
@@ -91,7 +101,10 @@ export const Sidebar = ({ activeItem, onItemClick }: SidebarProps) => {
 
       {/* Logout */}
       <div className="p-3 border-t border-sidebar-border">
-        <button className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors">
+        <button 
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
+        >
           <LogOut className="w-5 h-5" />
           Logout
         </button>
