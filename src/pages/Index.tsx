@@ -19,6 +19,7 @@ import { SecurityManagement } from "@/components/SecurityManagement";
 import { DNSManager } from "@/components/DNSManager";
 import { FTPManager } from "@/components/FTPManager";
 import { SubdomainManager } from "@/components/SubdomainManager";
+import { BackupsManagement } from "@/components/BackupsManagement";
 import { SettingsPage } from "@/components/SettingsPage";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
@@ -62,6 +63,8 @@ const Index = () => {
         return <FileManager />;
       case "ftp":
         return <FTPManager />;
+      case "backups":
+        return <BackupsManagement />;
       case "terminal":
         return <Terminal />;
       case "users":
