@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Cpu, MemoryStick, HardDrive, Network } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
+import { UpdateBanner } from "@/components/UpdateBanner";
 import { StatCard } from "@/components/StatCard";
 import { QuickActions } from "@/components/QuickActions";
 import { SitesTable } from "@/components/SitesTable";
@@ -177,6 +178,7 @@ const Index = () => {
 
       {/* Main content - responsive padding for collapsed sidebar */}
       <div className="lg:pl-20 xl:pl-64 transition-all duration-300">
+        <UpdateBanner />
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
         <main className="p-4 sm:p-6 animate-fade-in">

@@ -17,6 +17,11 @@ import {
   LogOut,
   User,
   Mail,
+  Download,
+  Cpu,
+  ExternalLink,
+  Sparkles,
+  Github,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -24,6 +29,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import {
   Card,
   CardContent,
@@ -43,6 +49,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { useFirmwareUpdate, CURRENT_VERSION } from "@/hooks/useFirmwareUpdate";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
@@ -103,6 +110,15 @@ const mockLoginHistory = [
 export const SettingsPage = () => {
   const { user } = useAuth();
   const { toast } = useToast();
+  const {
+    updateInfo,
+    isChecking,
+    isUpdating,
+    updateProgress,
+    checkForUpdates,
+    triggerUpdate,
+    currentVersion,
+  } = useFirmwareUpdate();
   
   // Password form state
   const [passwordForm, setPasswordForm] = useState({
@@ -208,7 +224,7 @@ export const SettingsPage = () => {
       </div>
 
       <Tabs defaultValue="account" className="space-y-6">
-        <TabsList className="bg-secondary border border-border">
+        <TabsList className="bg-secondary border border-border flex-wrap">
           <TabsTrigger value="account" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <User className="w-4 h-4 mr-2" />
             Account
@@ -220,6 +236,10 @@ export const SettingsPage = () => {
           <TabsTrigger value="sessions" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
             <Monitor className="w-4 h-4 mr-2" />
             Sessions
+          </TabsTrigger>
+          <TabsTrigger value="firmware" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Cpu className="w-4 h-4 mr-2" />
+            Firmware
           </TabsTrigger>
         </TabsList>
 
@@ -612,6 +632,183 @@ export const SettingsPage = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+        {/* Firmware Tab */}
+        <TabsContent value="firmware" className="space-y-6">
+          {/* Current Version */}
+          <Card className="glass-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Cpu className="w-5 h-5" />
+                Panel Information
+              </CardTitle>
+              <CardDescription>Current firmware version and update status</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50">
+                <div className="space-y-1">
+                  <p className="text-sm font-medium text-foreground">Current Version</p>
+                  <p className="text-2xl font-bold text-primary">v{currentVersion}</p>
+                </div>
+                <Badge
+                  variant="outline"
+                  className={
+                    updateInfo?.hasUpdate
+                      ? "bg-warning/20 text-warning border-warning/30"
+                      : "bg-success/20 text-success border-success/30"
+                  }
+                >
+                  {updateInfo?.hasUpdate ? "Update Available" : "Up to Date"}
+                </Badge>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground">Source Repository</Label>
+                  <a
+                    href="https://github.com/pranto48/amppanel"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="flex items-center gap-2 text-primary hover:underline"
+                  >
+                    <Github className="w-4 h-4" />
+                    pranto48/amppanel
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+                <div className="space-y-1">
+                  <Label className="text-muted-foreground">Last Checked</Label>
+                  <p className="text-foreground">
+                    {isChecking ? "Checking..." : "Just now"}
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                variant="outline"
+                onClick={() => checkForUpdates()}
+                disabled={isChecking}
+              >
+                {isChecking ? (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2 animate-spin" />
+                    Checking...
+                  </>
+                ) : (
+                  <>
+                    <RefreshCw className="w-4 h-4 mr-2" />
+                    Check for Updates
+                  </>
+                )}
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* Update Available Card */}
+          {updateInfo?.hasUpdate && (
+            <Card className="glass-card border-primary/30 bg-gradient-to-br from-primary/5 to-info/5">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-primary" />
+                  New Version Available
+                </CardTitle>
+                <CardDescription>
+                  Version {updateInfo.latestVersion} is ready to install
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {updateInfo.releaseName && (
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground">Release Name</Label>
+                    <p className="text-foreground font-medium">{updateInfo.releaseName}</p>
+                  </div>
+                )}
+
+                {updateInfo.publishedAt && (
+                  <div className="space-y-1">
+                    <Label className="text-muted-foreground">Published</Label>
+                    <p className="text-foreground">
+                      {new Date(updateInfo.publishedAt).toLocaleDateString("en-US", {
+                        year: "numeric",
+                        month: "long",
+                        day: "numeric",
+                      })}
+                    </p>
+                  </div>
+                )}
+
+                {updateInfo.changelog && (
+                  <div className="space-y-2">
+                    <Label className="text-muted-foreground">Changelog</Label>
+                    <div className="p-4 rounded-lg bg-muted/50 max-h-48 overflow-y-auto">
+                      <pre className="text-sm text-foreground whitespace-pre-wrap font-mono">
+                        {updateInfo.changelog}
+                      </pre>
+                    </div>
+                  </div>
+                )}
+
+                <div className="flex items-center gap-3 pt-2">
+                  {isUpdating ? (
+                    <div className="flex-1 space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Updating...</span>
+                        <span className="text-foreground font-medium">{updateProgress}%</span>
+                      </div>
+                      <Progress value={updateProgress} className="h-2" />
+                    </div>
+                  ) : (
+                    <>
+                      <Button
+                        className="bg-gradient-to-r from-primary to-info text-primary-foreground"
+                        onClick={triggerUpdate}
+                      >
+                        <Download className="w-4 h-4 mr-2" />
+                        Install Update
+                      </Button>
+                      {updateInfo.releaseUrl && (
+                        <Button
+                          variant="outline"
+                          onClick={() => window.open(updateInfo.releaseUrl, "_blank")}
+                        >
+                          <ExternalLink className="w-4 h-4 mr-2" />
+                          View on GitHub
+                        </Button>
+                      )}
+                    </>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Update History - Placeholder */}
+          <Card className="glass-card border-border">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5" />
+                Update History
+              </CardTitle>
+              <CardDescription>Recent firmware updates applied to this panel</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
+                  <div className="flex items-center gap-3">
+                    <CheckCircle className="w-5 h-5 text-success" />
+                    <div>
+                      <p className="text-sm font-medium text-foreground">v{currentVersion}</p>
+                      <p className="text-xs text-muted-foreground">Initial installation</p>
+                    </div>
+                  </div>
+                  <Badge variant="outline" className="bg-success/20 text-success border-success/30">
+                    Current
+                  </Badge>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
     </div>
   );
 };
