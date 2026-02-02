@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Cpu, MemoryStick, HardDrive, Network } from "lucide-react";
+import { Cpu, MemoryStick, HardDrive, Network, ChevronRight } from "lucide-react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { UpdateBanner } from "@/components/UpdateBanner";
@@ -30,6 +30,7 @@ import { cn } from "@/lib/utils";
 const Index = () => {
   const [activeItem, setActiveItem] = useState("dashboard");
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [hasLoggedLogin, setHasLoggedLogin] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
@@ -187,11 +188,27 @@ const Index = () => {
           onItemClick={setActiveItem}
           isOpen={sidebarOpen}
           onClose={() => setSidebarOpen(false)}
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={setSidebarCollapsed}
         />
       </div>
 
-      {/* Main content - responsive padding for collapsed sidebar */}
-      <div className="lg:pl-20 xl:pl-64 transition-all duration-300">
+      {/* Floating expand button when sidebar is collapsed - desktop only */}
+      {sidebarCollapsed && (
+        <button
+          onClick={() => setSidebarCollapsed(false)}
+          className="hidden lg:flex fixed left-2 top-1/2 -translate-y-1/2 z-50 w-8 h-16 items-center justify-center bg-sidebar border border-sidebar-border rounded-r-lg shadow-lg hover:bg-primary/10 hover:border-primary/30 transition-all duration-200 group"
+          title="Expand sidebar"
+        >
+          <ChevronRight className="w-4 h-4 text-muted-foreground group-hover:text-primary transition-colors" />
+        </button>
+      )}
+
+      {/* Main content - responsive padding for sidebar */}
+      <div className={cn(
+        "transition-all duration-300",
+        sidebarCollapsed ? "lg:pl-20" : "lg:pl-20 xl:pl-64"
+      )}>
         <UpdateBanner />
         <Header onMenuClick={() => setSidebarOpen(true)} />
         
