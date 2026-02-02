@@ -1,7 +1,7 @@
 project_id = "xdxtcxseaymblvycryrn"
 
 [functions.terminal]
-verify_jwt = true
+verify_jwt = false
 
 [functions.setup-admin]
 verify_jwt = false
@@ -10,4 +10,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.check-updates]
+verify_jwt = false
+
+[functions.totp]
 verify_jwt = false
