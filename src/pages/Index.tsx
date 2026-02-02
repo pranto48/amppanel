@@ -23,6 +23,7 @@ import { SubdomainManager } from "@/components/SubdomainManager";
 import { BackupsManagement } from "@/components/BackupsManagement";
 import { SettingsPage } from "@/components/SettingsPage";
 import { ActivityLogsPage } from "@/components/ActivityLogsPage";
+import { EmailManagement } from "@/components/EmailManagement";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogActivity } from "@/hooks/useActivityLogs";
 import { cn } from "@/lib/utils";
@@ -91,6 +92,8 @@ const Index = () => {
         return <MonitoringPage />;
       case "activity":
         return <ActivityLogsPage />;
+      case "email":
+        return <EmailManagement />;
       case "settings":
         return <SettingsPage />;
       case "dashboard":
