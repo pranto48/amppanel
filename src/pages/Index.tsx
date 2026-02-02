@@ -11,6 +11,7 @@ import { ResourceChart } from "@/components/ResourceChart";
 import { RecentActivity } from "@/components/RecentActivity";
 import { SitesManagement } from "@/components/SitesManagement";
 import { MonitoringPage } from "@/components/MonitoringPage";
+import { UsersManagement } from "@/components/UsersManagement";
 import { DatabasesManagement } from "@/components/DatabasesManagement";
 import { FileManager } from "@/components/FileManager";
 import { Terminal } from "@/components/Terminal";
@@ -63,6 +64,8 @@ const Index = () => {
         return <FTPManager />;
       case "terminal":
         return <Terminal />;
+      case "users":
+        return <UsersManagement />;
       case "security":
         return <SecurityManagement />;
       case "dns":
