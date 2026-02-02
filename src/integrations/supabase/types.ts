@@ -211,6 +211,132 @@ export type Database = {
           },
         ]
       }
+      email_accounts: {
+        Row: {
+          created_at: string
+          email: string
+          id: string
+          is_active: boolean
+          password_hash: string | null
+          quota_mb: number
+          site_id: string
+          updated_at: string
+          used_mb: number
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          id?: string
+          is_active?: boolean
+          password_hash?: string | null
+          quota_mb?: number
+          site_id: string
+          updated_at?: string
+          used_mb?: number
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          id?: string
+          is_active?: boolean
+          password_hash?: string | null
+          quota_mb?: number
+          site_id?: string
+          updated_at?: string
+          used_mb?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_accounts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_autoresponders: {
+        Row: {
+          body: string
+          created_at: string
+          email_account_id: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          start_date: string | null
+          subject: string
+          updated_at: string
+        }
+        Insert: {
+          body: string
+          created_at?: string
+          email_account_id: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          start_date?: string | null
+          subject: string
+          updated_at?: string
+        }
+        Update: {
+          body?: string
+          created_at?: string
+          email_account_id?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          start_date?: string | null
+          subject?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_autoresponders_email_account_id_fkey"
+            columns: ["email_account_id"]
+            isOneToOne: false
+            referencedRelation: "email_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      email_forwarders: {
+        Row: {
+          created_at: string
+          destination_emails: string[]
+          id: string
+          is_active: boolean
+          site_id: string
+          source_email: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          destination_emails?: string[]
+          id?: string
+          is_active?: boolean
+          site_id: string
+          source_email: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          destination_emails?: string[]
+          id?: string
+          is_active?: boolean
+          site_id?: string
+          source_email?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "email_forwarders_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_members: {
         Row: {
           created_at: string
