@@ -10,6 +10,7 @@ import { SystemServices } from "@/components/SystemServices";
 import { ResourceChart } from "@/components/ResourceChart";
 import { RecentActivity } from "@/components/RecentActivity";
 import { SitesManagement } from "@/components/SitesManagement";
+import { MonitoringPage } from "@/components/MonitoringPage";
 import { DatabasesManagement } from "@/components/DatabasesManagement";
 import { FileManager } from "@/components/FileManager";
 import { Terminal } from "@/components/Terminal";
@@ -66,6 +67,8 @@ const Index = () => {
         return <SecurityManagement />;
       case "dns":
         return <DNSManager />;
+      case "monitoring":
+        return <MonitoringPage />;
       case "settings":
         return <SettingsPage />;
       case "dashboard":
