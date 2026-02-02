@@ -141,7 +141,7 @@ const Index = () => {
 
             {/* Quick actions */}
             <div className="mb-6">
-              <QuickActions />
+              <QuickActions onNavigate={setActiveItem} />
             </div>
 
             {/* Charts and Services */}
