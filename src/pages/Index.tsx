@@ -15,6 +15,8 @@ import { FileManager } from "@/components/FileManager";
 import { Terminal } from "@/components/Terminal";
 import { SecurityManagement } from "@/components/SecurityManagement";
 import { DNSManager } from "@/components/DNSManager";
+import { FTPManager } from "@/components/FTPManager";
+import { SubdomainManager } from "@/components/SubdomainManager";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -49,10 +51,14 @@ const Index = () => {
     switch (activeItem) {
       case "sites":
         return <SitesManagement />;
+      case "subdomains":
+        return <SubdomainManager />;
       case "databases":
         return <DatabasesManagement />;
       case "files":
         return <FileManager />;
+      case "ftp":
+        return <FTPManager />;
       case "terminal":
         return <Terminal />;
       case "security":
