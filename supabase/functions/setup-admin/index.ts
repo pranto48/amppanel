@@ -18,7 +18,6 @@ serve(async (req) => {
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseServiceKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
     
-    // Create admin client with service role key
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
       auth: {
         autoRefreshToken: false,
@@ -26,69 +25,142 @@ serve(async (req) => {
       },
     });
 
-    // Check if default admin already exists
-    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
-    
-    if (listError) {
-      console.error('Error listing users:', listError);
-      throw listError;
-    }
+    const body = await req.json().catch(() => ({}));
+    const { action, user_id, email, password, full_name, role } = body;
 
-    const adminExists = existingUsers.users.some(
-      (user) => user.email === DEFAULT_ADMIN_EMAIL
-    );
-
-    if (adminExists) {
-      console.log('Default admin already exists');
-      return new Response(
-        JSON.stringify({ 
-          success: true, 
-          message: 'Default admin already exists',
-          credentials: {
-            email: DEFAULT_ADMIN_EMAIL,
-            password: '(already set)'
-          }
-        }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // Create default admin user
-    const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
-      email: DEFAULT_ADMIN_EMAIL,
-      password: DEFAULT_ADMIN_PASSWORD,
-      email_confirm: true, // Auto-confirm the email
-      user_metadata: {
-        role: 'admin',
-        is_default_admin: true,
-      },
-    });
-
-    if (createError) {
-      console.error('Error creating admin:', createError);
-      throw createError;
-    }
-
-    console.log('Default admin created successfully:', newUser.user?.email);
-
-    return new Response(
-      JSON.stringify({ 
-        success: true, 
-        message: 'Default admin created successfully',
-        credentials: {
-          email: DEFAULT_ADMIN_EMAIL,
-          password: DEFAULT_ADMIN_PASSWORD
+    // Handle different actions
+    switch (action) {
+      case 'create_user': {
+        if (!email || !password) {
+          return new Response(
+            JSON.stringify({ error: 'Email and password are required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
-      }),
-      { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-    );
+
+        // Create user
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          password,
+          email_confirm: true,
+          user_metadata: { full_name: full_name || '' },
+        });
+
+        if (createError) throw createError;
+
+        // Update profile with full_name
+        if (full_name && newUser.user) {
+          await supabaseAdmin
+            .from('profiles')
+            .update({ full_name })
+            .eq('id', newUser.user.id);
+        }
+
+        // Update role if specified and not default 'user'
+        if (role && role !== 'user' && newUser.user) {
+          await supabaseAdmin
+            .from('user_roles')
+            .update({ role })
+            .eq('user_id', newUser.user.id);
+        }
+
+        return new Response(
+          JSON.stringify({ success: true, user: newUser.user }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'delete_user': {
+        if (!user_id) {
+          return new Response(
+            JSON.stringify({ error: 'User ID is required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const { error: deleteError } = await supabaseAdmin.auth.admin.deleteUser(user_id);
+        if (deleteError) throw deleteError;
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      case 'update_role': {
+        if (!user_id || !role) {
+          return new Response(
+            JSON.stringify({ error: 'User ID and role are required' }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        // Delete existing role and insert new one
+        await supabaseAdmin.from('user_roles').delete().eq('user_id', user_id);
+        const { error: roleError } = await supabaseAdmin
+          .from('user_roles')
+          .insert({ user_id, role });
+
+        if (roleError) throw roleError;
+
+        return new Response(
+          JSON.stringify({ success: true }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+
+      default: {
+        // Original setup admin logic
+        const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        
+        if (listError) throw listError;
+
+        const adminExists = existingUsers.users.some(
+          (user) => user.email === DEFAULT_ADMIN_EMAIL
+        );
+
+        if (adminExists) {
+          return new Response(
+            JSON.stringify({ 
+              success: true, 
+              message: 'Default admin already exists',
+              credentials: { email: DEFAULT_ADMIN_EMAIL, password: '(already set)' }
+            }),
+            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
+        const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
+          email: DEFAULT_ADMIN_EMAIL,
+          password: DEFAULT_ADMIN_PASSWORD,
+          email_confirm: true,
+          user_metadata: { role: 'admin', is_default_admin: true },
+        });
+
+        if (createError) throw createError;
+
+        // Assign super_admin role
+        if (newUser.user) {
+          await supabaseAdmin
+            .from('user_roles')
+            .update({ role: 'super_admin' })
+            .eq('user_id', newUser.user.id);
+        }
+
+        return new Response(
+          JSON.stringify({ 
+            success: true, 
+            message: 'Default admin created successfully',
+            credentials: { email: DEFAULT_ADMIN_EMAIL, password: DEFAULT_ADMIN_PASSWORD }
+          }),
+          { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        );
+      }
+    }
   } catch (error: any) {
-    console.error('Setup error:', error);
+    console.error('Error:', error);
     return new Response(
-      JSON.stringify({ 
-        success: false, 
-        error: error.message || 'Failed to setup default admin'
-      }),
+      JSON.stringify({ success: false, error: error.message }),
       { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
