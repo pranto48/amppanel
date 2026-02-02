@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Database, Plus, Search, Trash2, ExternalLink, RefreshCw } from "lucide-react";
+import { Database, Plus, Search, Trash2, ExternalLink, RefreshCw, Info } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -24,6 +24,7 @@ import {
 import { useDatabases, useDeleteDatabase } from "@/hooks/useDatabases";
 import { useSites } from "@/hooks/useSites";
 import { AddDatabaseDialog } from "@/components/AddDatabaseDialog";
+import { DatabaseConnectionModal } from "@/components/DatabaseConnectionModal";
 import { useToast } from "@/hooks/use-toast";
 import type { Tables } from "@/integrations/supabase/types";
 
@@ -33,6 +34,7 @@ export const DatabasesManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [connectionModalOpen, setConnectionModalOpen] = useState(false);
   const [selectedDatabase, setSelectedDatabase] = useState<DatabaseType | null>(null);
 
   const { data: databases, isLoading, refetch } = useDatabases();
@@ -249,17 +251,31 @@ export const DatabasesManagement = () => {
                     {db.db_charset || "utf8mb4"}
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-destructive hover:bg-destructive/10"
-                      onClick={() => {
-                        setSelectedDatabase(db);
-                        setDeleteDialogOpen(true);
-                      }}
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-muted-foreground hover:text-foreground hover:bg-muted"
+                        onClick={() => {
+                          setSelectedDatabase(db);
+                          setConnectionModalOpen(true);
+                        }}
+                        title="Connection Info"
+                      >
+                        <Info className="w-4 h-4" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="text-destructive hover:bg-destructive/10"
+                        onClick={() => {
+                          setSelectedDatabase(db);
+                          setDeleteDialogOpen(true);
+                        }}
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))
@@ -272,6 +288,14 @@ export const DatabasesManagement = () => {
       <AddDatabaseDialog
         open={isAddDialogOpen}
         onOpenChange={setIsAddDialogOpen}
+      />
+
+      {/* Connection Info Modal */}
+      <DatabaseConnectionModal
+        open={connectionModalOpen}
+        onOpenChange={setConnectionModalOpen}
+        database={selectedDatabase}
+        siteDomain={selectedDatabase ? getSiteDomain(selectedDatabase.site_id) : ""}
       />
 
       {/* Delete Confirmation Dialog */}
