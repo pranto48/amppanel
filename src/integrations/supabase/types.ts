@@ -14,16 +14,164 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      databases: {
+        Row: {
+          created_at: string
+          db_charset: string | null
+          db_collation: string | null
+          db_type: Database["public"]["Enums"]["db_type"]
+          id: string
+          name: string
+          password_hash: string | null
+          site_id: string
+          size_mb: number
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          created_at?: string
+          db_charset?: string | null
+          db_collation?: string | null
+          db_type?: Database["public"]["Enums"]["db_type"]
+          id?: string
+          name: string
+          password_hash?: string | null
+          site_id: string
+          size_mb?: number
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          created_at?: string
+          db_charset?: string | null
+          db_collation?: string | null
+          db_type?: Database["public"]["Enums"]["db_type"]
+          id?: string
+          name?: string
+          password_hash?: string | null
+          site_id?: string
+          size_mb?: number
+          updated_at?: string
+          username?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "databases_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["site_role"]
+          site_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["site_role"]
+          site_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["site_role"]
+          site_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_members_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sites: {
+        Row: {
+          bandwidth_limit_gb: number
+          bandwidth_used_gb: number
+          created_at: string
+          document_root: string | null
+          domain: string
+          ftp_password_hash: string | null
+          ftp_username: string | null
+          id: string
+          php_version: string | null
+          site_type: Database["public"]["Enums"]["site_type"]
+          ssl_enabled: boolean
+          ssl_expiry: string | null
+          status: Database["public"]["Enums"]["site_status"]
+          storage_limit_mb: number
+          storage_used_mb: number
+          updated_at: string
+        }
+        Insert: {
+          bandwidth_limit_gb?: number
+          bandwidth_used_gb?: number
+          created_at?: string
+          document_root?: string | null
+          domain: string
+          ftp_password_hash?: string | null
+          ftp_username?: string | null
+          id?: string
+          php_version?: string | null
+          site_type?: Database["public"]["Enums"]["site_type"]
+          ssl_enabled?: boolean
+          ssl_expiry?: string | null
+          status?: Database["public"]["Enums"]["site_status"]
+          storage_limit_mb?: number
+          storage_used_mb?: number
+          updated_at?: string
+        }
+        Update: {
+          bandwidth_limit_gb?: number
+          bandwidth_used_gb?: number
+          created_at?: string
+          document_root?: string | null
+          domain?: string
+          ftp_password_hash?: string | null
+          ftp_username?: string | null
+          id?: string
+          php_version?: string | null
+          site_type?: Database["public"]["Enums"]["site_type"]
+          ssl_enabled?: boolean
+          ssl_expiry?: string | null
+          status?: Database["public"]["Enums"]["site_status"]
+          storage_limit_mb?: number
+          storage_used_mb?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_site_role: {
+        Args: { _site_id: string; _user_id: string }
+        Returns: Database["public"]["Enums"]["site_role"]
+      }
+      has_site_access: {
+        Args: { _site_id: string; _user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      db_type: "mysql" | "postgresql" | "mariadb"
+      site_role: "owner" | "admin" | "developer" | "viewer"
+      site_status: "active" | "pending" | "suspended" | "error"
+      site_type: "wordpress" | "nodejs" | "python" | "php" | "static" | "custom"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +298,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      db_type: ["mysql", "postgresql", "mariadb"],
+      site_role: ["owner", "admin", "developer", "viewer"],
+      site_status: ["active", "pending", "suspended", "error"],
+      site_type: ["wordpress", "nodejs", "python", "php", "static", "custom"],
+    },
   },
 } as const
