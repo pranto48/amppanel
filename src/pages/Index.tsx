@@ -17,6 +17,7 @@ import { SecurityManagement } from "@/components/SecurityManagement";
 import { DNSManager } from "@/components/DNSManager";
 import { FTPManager } from "@/components/FTPManager";
 import { SubdomainManager } from "@/components/SubdomainManager";
+import { SettingsPage } from "@/components/SettingsPage";
 import { useAuth } from "@/hooks/useAuth";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,8 @@ const Index = () => {
         return <SecurityManagement />;
       case "dns":
         return <DNSManager />;
+      case "settings":
+        return <SettingsPage />;
       case "dashboard":
       default:
         return (
