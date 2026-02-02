@@ -66,8 +66,18 @@ export const useCreateBackup = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: ["backups"] });
+      // Dispatch custom event for notification system
+      window.dispatchEvent(new CustomEvent("backup-complete", { 
+        detail: { backup: data, status: "completed" }
+      }));
+    },
+    onError: (error, variables) => {
+      // Dispatch custom event for notification system
+      window.dispatchEvent(new CustomEvent("backup-complete", { 
+        detail: { backupName: variables.name, siteId: variables.site_id, status: "failed", error: error.message }
+      }));
     },
   });
 };
