@@ -588,50 +588,6 @@ export const SettingsPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
-      </Tabs>
-
-      {/* Revoke Session Dialog */}
-      <AlertDialog open={!!revokeSessionId} onOpenChange={() => setRevokeSessionId(null)}>
-        <AlertDialogContent className="bg-card border-border">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Revoke Session</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will log out the device from your account. Are you sure?
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-border">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={() => revokeSessionId && handleRevokeSession(revokeSessionId)}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Revoke Session
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
-
-      {/* Logout All Dialog */}
-      <AlertDialog open={logoutAllDialogOpen} onOpenChange={setLogoutAllDialogOpen}>
-        <AlertDialogContent className="bg-card border-border">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Logout All Devices</AlertDialogTitle>
-            <AlertDialogDescription>
-              This will log out all devices from your account, including this one.
-              You will need to log in again.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-border">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleLogoutAll}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Logout All Devices
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
 
         {/* Firmware Tab */}
         <TabsContent value="firmware" className="space-y-6">
@@ -809,6 +765,50 @@ export const SettingsPage = () => {
             </CardContent>
           </Card>
         </TabsContent>
+      </Tabs>
+
+      {/* Revoke Session Dialog */}
+      <AlertDialog open={!!revokeSessionId} onOpenChange={() => setRevokeSessionId(null)}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Revoke Session</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will log out the device from your account. Are you sure?
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => revokeSessionId && handleRevokeSession(revokeSessionId)}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Revoke Session
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
+      {/* Logout All Dialog */}
+      <AlertDialog open={logoutAllDialogOpen} onOpenChange={setLogoutAllDialogOpen}>
+        <AlertDialogContent className="bg-card border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Logout All Devices</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will log out all devices from your account, including this one.
+              You will need to log in again.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="border-border">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleLogoutAll}
+              className="bg-destructive hover:bg-destructive/90"
+            >
+              Logout All Devices
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 };
