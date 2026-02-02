@@ -109,7 +109,7 @@ const frequencyConfig = {
 
 export const BackupsManagement = () => {
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedSite, setSelectedSite] = useState<string>("");
+  const [selectedSite, setSelectedSite] = useState<string>("all");
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
@@ -132,8 +132,9 @@ export const BackupsManagement = () => {
   });
 
   const { data: sites } = useSites();
-  const { data: backups, isLoading, refetch } = useBackups(selectedSite || undefined);
-  const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = useBackupSchedules(selectedSite || undefined);
+  const selectedSiteId = selectedSite === "all" ? undefined : selectedSite;
+  const { data: backups, isLoading, refetch } = useBackups(selectedSiteId);
+  const { data: schedules, isLoading: schedulesLoading, refetch: refetchSchedules } = useBackupSchedules(selectedSiteId);
   const createBackup = useCreateBackup();
   const deleteBackup = useDeleteBackup();
   const restoreBackup = useRestoreBackup();
@@ -384,7 +385,7 @@ export const BackupsManagement = () => {
                 <SelectValue placeholder="Filter by site" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Sites</SelectItem>
+                <SelectItem value="all">All Sites</SelectItem>
                 {sites?.map((site) => (<SelectItem key={site.id} value={site.id}>{site.domain}</SelectItem>))}
               </SelectContent>
             </Select>
