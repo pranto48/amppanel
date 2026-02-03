@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { 
   Cpu, 
   MemoryStick, 
@@ -12,6 +12,8 @@ import {
   XCircle,
   RefreshCw
 } from "lucide-react";
+import { useLatestMetrics, useMetricsHistory, formatBytes, formatUptime } from "@/hooks/useSystemMetrics";
+import { SiteMetricsFilter } from "@/components/SiteMetricsFilter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,22 +45,6 @@ interface ServiceStatus {
   lastCheck: string;
 }
 
-const generateInitialData = (): MetricDataPoint[] => {
-  const data: MetricDataPoint[] = [];
-  const now = new Date();
-  
-  for (let i = 29; i >= 0; i--) {
-    const time = new Date(now.getTime() - i * 60000);
-    data.push({
-      time: time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-      cpu: Math.floor(Math.random() * 40) + 20,
-      memory: Math.floor(Math.random() * 30) + 35,
-      disk: Math.floor(Math.random() * 10) + 20,
-      network: Math.floor(Math.random() * 50) + 10,
-    });
-  }
-  return data;
-};
 
 const initialServices: ServiceStatus[] = [
   { name: "Apache/Nginx", status: "online", uptime: "99.98%", lastCheck: "10s ago" },
@@ -72,56 +58,34 @@ const initialServices: ServiceStatus[] = [
 ];
 
 export const MonitoringPage = () => {
-  const [metricsData, setMetricsData] = useState<MetricDataPoint[]>(generateInitialData);
+  const [selectedSiteId, setSelectedSiteId] = useState<string | undefined>(undefined);
   const [services, setServices] = useState<ServiceStatus[]>(initialServices);
-  const [currentMetrics, setCurrentMetrics] = useState({
-    cpu: 42,
-    memory: 39,
-    disk: 25,
-    network: 65,
-  });
-  const [serverUptime, setServerUptime] = useState("45 days, 12 hours, 34 minutes");
-  const [isLive, setIsLive] = useState(true);
-
-  useEffect(() => {
-    if (!isLive) return;
-
-    const interval = setInterval(() => {
-      const now = new Date();
-      const newCpu = Math.min(100, Math.max(10, currentMetrics.cpu + (Math.random() - 0.5) * 10));
-      const newMemory = Math.min(100, Math.max(20, currentMetrics.memory + (Math.random() - 0.5) * 5));
-      const newDisk = Math.min(100, Math.max(15, currentMetrics.disk + (Math.random() - 0.5) * 2));
-      const newNetwork = Math.min(100, Math.max(5, currentMetrics.network + (Math.random() - 0.5) * 15));
-
-      setCurrentMetrics({
-        cpu: Math.round(newCpu),
-        memory: Math.round(newMemory),
-        disk: Math.round(newDisk),
-        network: Math.round(newNetwork),
-      });
-
-      setMetricsData((prev) => {
-        const newData = [...prev.slice(1), {
-          time: now.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-          cpu: Math.round(newCpu),
-          memory: Math.round(newMemory),
-          disk: Math.round(newDisk),
-          network: Math.round(newNetwork),
-        }];
-        return newData;
-      });
-
-      // Update service last check times
-      setServices((prev) =>
-        prev.map((service) => ({
-          ...service,
-          lastCheck: "Just now",
-        }))
-      );
-    }, 3000);
-
-    return () => clearInterval(interval);
-  }, [isLive, currentMetrics]);
+  
+  // Use real metrics from the database
+  const { data: latestMetrics, isLoading: metricsLoading, refetch } = useLatestMetrics(selectedSiteId);
+  const { data: metricsHistory } = useMetricsHistory(30, selectedSiteId);
+  
+  // Transform real metrics for display
+  const currentMetrics = {
+    cpu: Math.round(latestMetrics?.cpu_percent || 0),
+    memory: latestMetrics ? Math.round((latestMetrics.memory_used_mb / latestMetrics.memory_total_mb) * 100) : 0,
+    disk: latestMetrics ? Math.round((latestMetrics.disk_used_gb / latestMetrics.disk_total_gb) * 100) : 0,
+    network: Math.min(100, Math.round((latestMetrics?.network_in_mbps || 0) + (latestMetrics?.network_out_mbps || 0))),
+  };
+  
+  const serverUptime = formatUptime(latestMetrics?.uptime_seconds);
+  
+  // Transform history for charts
+  const metricsData: MetricDataPoint[] = metricsHistory?.map((metric) => {
+    const time = new Date(metric.recorded_at);
+    return {
+      time: time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+      cpu: Math.round(metric.cpu_percent),
+      memory: Math.round((metric.memory_used_mb / metric.memory_total_mb) * 100),
+      disk: Math.round((metric.disk_used_gb / metric.disk_total_gb) * 100),
+      network: Math.round(metric.network_in_mbps + metric.network_out_mbps),
+    };
+  }) || [];
 
   const getStatusIcon = (status: ServiceStatus["status"]) => {
     switch (status) {
@@ -160,18 +124,16 @@ export const MonitoringPage = () => {
           <p className="text-muted-foreground">Real-time server metrics and service status</p>
         </div>
         <div className="flex items-center gap-3">
+          <SiteMetricsFilter 
+            selectedSiteId={selectedSiteId} 
+            onSiteChange={setSelectedSiteId} 
+          />
           <div className="flex items-center gap-2">
-            <div className={`w-2 h-2 rounded-full ${isLive ? "bg-success animate-pulse" : "bg-muted"}`} />
-            <span className="text-sm text-muted-foreground">{isLive ? "Live" : "Paused"}</span>
+            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
+            <span className="text-sm text-muted-foreground">Live</span>
           </div>
-          <Button
-            variant="outline"
-            onClick={() => setIsLive(!isLive)}
-          >
-            {isLive ? "Pause" : "Resume"}
-          </Button>
-          <Button variant="outline" onClick={() => setMetricsData(generateInitialData())}>
-            <RefreshCw className="w-4 h-4 mr-2" />
+          <Button variant="outline" onClick={() => refetch()} disabled={metricsLoading}>
+            <RefreshCw className={`w-4 h-4 mr-2 ${metricsLoading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
         </div>
@@ -208,7 +170,7 @@ export const MonitoringPage = () => {
               <span className="text-2xl font-bold text-foreground">{currentMetrics.cpu}%</span>
             </div>
             <Progress value={currentMetrics.cpu} className={`h-2 ${getProgressColor(currentMetrics.cpu)}`} />
-            <p className="text-xs text-muted-foreground mt-2">4 Cores @ 3.2 GHz</p>
+            <p className="text-xs text-muted-foreground mt-2">Load: {latestMetrics?.load_avg_1m?.toFixed(2) || "N/A"}</p>
           </CardContent>
         </Card>
 
@@ -222,7 +184,7 @@ export const MonitoringPage = () => {
               <span className="text-2xl font-bold text-foreground">{currentMetrics.memory}%</span>
             </div>
             <Progress value={currentMetrics.memory} className={`h-2 ${getProgressColor(currentMetrics.memory)}`} />
-            <p className="text-xs text-muted-foreground mt-2">6.2 GB of 16 GB</p>
+            <p className="text-xs text-muted-foreground mt-2">{formatBytes(latestMetrics?.memory_used_mb || 0)} of {formatBytes(latestMetrics?.memory_total_mb || 16384)}</p>
           </CardContent>
         </Card>
 
@@ -236,7 +198,7 @@ export const MonitoringPage = () => {
               <span className="text-2xl font-bold text-foreground">{currentMetrics.disk}%</span>
             </div>
             <Progress value={currentMetrics.disk} className={`h-2 ${getProgressColor(currentMetrics.disk)}`} />
-            <p className="text-xs text-muted-foreground mt-2">124 GB of 500 GB</p>
+            <p className="text-xs text-muted-foreground mt-2">{(latestMetrics?.disk_used_gb || 0).toFixed(0)} GB of {(latestMetrics?.disk_total_gb || 500).toFixed(0)} GB</p>
           </CardContent>
         </Card>
 
@@ -250,7 +212,7 @@ export const MonitoringPage = () => {
               <span className="text-2xl font-bold text-foreground">{currentMetrics.network}%</span>
             </div>
             <Progress value={currentMetrics.network} className={`h-2 ${getProgressColor(currentMetrics.network)}`} />
-            <p className="text-xs text-muted-foreground mt-2">1.2 Gb/s bandwidth</p>
+            <p className="text-xs text-muted-foreground mt-2">↓{(latestMetrics?.network_in_mbps || 0).toFixed(1)} ↑{(latestMetrics?.network_out_mbps || 0).toFixed(1)} Mbps</p>
           </CardContent>
         </Card>
       </div>
