@@ -18,7 +18,8 @@ import {
   ChevronLeft,
   ChevronRight,
   X,
-  ClipboardList
+  ClipboardList,
+  Store
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +37,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "plugins", label: "Plugins", icon: Store },
   { id: "sites", label: "Sites", icon: Globe },
   { id: "subdomains", label: "Subdomains", icon: Layers },
   { id: "databases", label: "Databases", icon: Database },

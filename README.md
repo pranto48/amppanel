@@ -1,73 +1,98 @@
-# Welcome to your Lovable project
+# AMP Panel
 
-## Project info
+A modern, open-source server control panel for managing web hosting services. Built with React, TypeScript, and Supabase.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+![AMP Panel](https://img.shields.io/badge/version-1.0.0-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-## How can I edit this code?
+## Features
 
-There are several ways of editing your application.
+- 🖥️ **Dashboard** - Real-time server metrics (CPU, Memory, Disk, Network)
+- 🌐 **Site Management** - Manage domains, subdomains, and SSL certificates
+- 📦 **Plugin Marketplace** - Install services on-demand (Nginx, MySQL, FTP, Email, etc.)
+- 📁 **File Manager** - Web-based file browser with code editor
+- 🗄️ **Database Management** - MySQL, PostgreSQL, MariaDB support
+- 📧 **Email Management** - Create accounts, forwarders, and autoresponders
+- 🔒 **Security** - 2FA, Fail2Ban, SSL management
+- 💾 **Backups** - Scheduled and manual backups with retention policies
+- 📊 **Monitoring** - Real-time metrics and historical charts
+- 👥 **User Management** - Role-based access control
+- 🖥️ **Terminal** - Web-based terminal emulator
 
-**Use Lovable**
+## Quick Start
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
+### Docker (Recommended)
 
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+```bash
+curl -fsSL https://raw.githubusercontent.com/amp-panel/amp-panel/main/scripts/install-docker.sh | bash
 ```
 
-**Edit a file directly in GitHub**
+### Ubuntu Server
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```bash
+curl -fsSL https://raw.githubusercontent.com/amp-panel/amp-panel/main/scripts/install-ubuntu.sh | sudo bash
+```
 
-**Use GitHub Codespaces**
+## Documentation
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+- [Installation Guide](docs/INSTALLATION.md)
+- [Plugin Development](docs/PLUGINS.md)
+- [API Reference](docs/API.md)
 
-## What technologies are used for this project?
+## Default Credentials
 
-This project is built with:
+After installation, use these credentials for first login:
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+- **Email:** `admin_amp@localhost`
+- **Password:** `Amp_Password`
 
-## How can I deploy this project?
+> ⚠️ **Important:** Change these credentials immediately after first login!
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+## Plugin Marketplace
 
-## Can I connect a custom domain to my Lovable project?
+Install services on-demand from the built-in marketplace:
 
-Yes, you can!
+| Category | Available Plugins |
+|----------|------------------|
+| Web Servers | Nginx, Apache |
+| FTP | VSFTPD, ProFTPD |
+| Email | Postfix, Dovecot |
+| DNS | BIND9, PowerDNS |
+| Databases | MySQL, MariaDB, PostgreSQL, Redis |
+| Backup | Restic, Duplicity |
+| Security | Fail2Ban, Certbot |
+| Monitoring | Netdata, Prometheus, Grafana |
+| File Manager | File Browser |
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Tech Stack
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+- **Frontend:** React, TypeScript, Tailwind CSS, shadcn/ui
+- **Backend:** Supabase (PostgreSQL, Auth, Edge Functions)
+- **Build:** Vite, Bun
+
+## Development
+
+```bash
+# Clone repository
+git clone https://github.com/amp-panel/amp-panel.git
+cd amp-panel
+
+# Install dependencies
+bun install
+
+# Start development server
+bun run dev
+```
+
+## Contributing
+
+Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details.
+
+## License
+
+MIT License - see [LICENSE](LICENSE) for details.
+
+## Support
+
+- [GitHub Issues](https://github.com/amp-panel/amp-panel/issues)
+- [Documentation](https://docs.amp-panel.io)
+- [Discord Community](https://discord.gg/amp-panel)
