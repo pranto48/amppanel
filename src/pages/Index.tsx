@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Cpu, MemoryStick, HardDrive, Network, ChevronRight } from "lucide-react";
+import { SiteMetricsFilter } from "@/components/SiteMetricsFilter";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { UpdateBanner } from "@/components/UpdateBanner";
@@ -30,8 +31,18 @@ import { useLatestMetrics, formatBytes } from "@/hooks/useSystemMetrics";
 import { cn } from "@/lib/utils";
 
 // Dashboard content component with real metrics
-const DashboardContent = ({ user, setActiveItem }: { user: any; setActiveItem: (item: string) => void }) => {
-  const { data: metrics } = useLatestMetrics();
+const DashboardContent = ({ 
+  user, 
+  setActiveItem, 
+  selectedSiteId, 
+  onSiteChange 
+}: { 
+  user: any; 
+  setActiveItem: (item: string) => void;
+  selectedSiteId: string | undefined;
+  onSiteChange: (siteId: string | undefined) => void;
+}) => {
+  const { data: metrics } = useLatestMetrics(selectedSiteId);
 
   const cpuPercent = Math.round(metrics?.cpu_percent || 0);
   const memoryPercent = metrics ? Math.round((metrics.memory_used_mb / metrics.memory_total_mb) * 100) : 0;
@@ -41,10 +52,16 @@ const DashboardContent = ({ user, setActiveItem }: { user: any; setActiveItem: (
 
   return (
     <>
-      {/* Page title */}
-      <div className="mb-6">
-        <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
-        <p className="text-muted-foreground">Welcome back, {user.email}!</p>
+      {/* Page title with site filter */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+        <div>
+          <h2 className="text-2xl font-bold text-foreground">Dashboard</h2>
+          <p className="text-muted-foreground">Welcome back, {user.email}!</p>
+        </div>
+        <SiteMetricsFilter 
+          selectedSiteId={selectedSiteId} 
+          onSiteChange={onSiteChange} 
+        />
       </div>
 
       {/* Stats grid */}
@@ -91,7 +108,7 @@ const DashboardContent = ({ user, setActiveItem }: { user: any; setActiveItem: (
       {/* Charts and Services */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         <div className="lg:col-span-2">
-          <ResourceChart />
+          <ResourceChart siteId={selectedSiteId} />
         </div>
         <div>
           <SystemServices />
@@ -116,6 +133,7 @@ const Index = () => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [hasLoggedLogin, setHasLoggedLogin] = useState(false);
+  const [selectedSiteId, setSelectedSiteId] = useState<string | undefined>(undefined);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { logLogin } = useLogActivity();
@@ -181,7 +199,14 @@ const Index = () => {
         return <SettingsPage />;
       case "dashboard":
       default:
-        return <DashboardContent user={user} setActiveItem={setActiveItem} />;
+        return (
+          <DashboardContent 
+            user={user} 
+            setActiveItem={setActiveItem} 
+            selectedSiteId={selectedSiteId}
+            onSiteChange={setSelectedSiteId}
+          />
+        );
     }
   };
 
