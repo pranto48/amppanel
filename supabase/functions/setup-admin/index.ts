@@ -147,6 +147,14 @@ serve(async (req) => {
             .eq('user_id', newUser.user.id);
         }
 
+        // Mark admin setup as complete
+        await supabaseAdmin
+          .from('system_settings')
+          .upsert({ 
+            key: 'admin_setup_complete', 
+            value: { completed: true, completed_at: new Date().toISOString() }
+          }, { onConflict: 'key' });
+
         return new Response(
           JSON.stringify({ 
             success: true, 

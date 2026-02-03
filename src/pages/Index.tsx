@@ -25,6 +25,7 @@ import { BackupsManagement } from "@/components/BackupsManagement";
 import { SettingsPage } from "@/components/SettingsPage";
 import { ActivityLogsPage } from "@/components/ActivityLogsPage";
 import { EmailManagement } from "@/components/EmailManagement";
+import { PluginsPage } from "@/components/PluginsPage";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogActivity } from "@/hooks/useActivityLogs";
 import { useLatestMetrics, formatBytes } from "@/hooks/useSystemMetrics";
@@ -169,6 +170,8 @@ const Index = () => {
 
   const renderContent = () => {
     switch (activeItem) {
+      case "plugins":
+        return <PluginsPage />;
       case "sites":
         return <SitesManagement />;
       case "subdomains":

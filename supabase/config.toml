@@ -14,3 +14,9 @@ verify_jwt = false
 
 [functions.totp]
 verify_jwt = false
+
+[functions.system-metrics]
+verify_jwt = false
+
+[functions.plugin-manager]
+verify_jwt = false

@@ -337,6 +337,145 @@ export type Database = {
           },
         ]
       }
+      installed_plugins: {
+        Row: {
+          config: Json | null
+          created_at: string
+          error_message: string | null
+          id: string
+          installed_at: string | null
+          installed_version: string | null
+          is_healthy: boolean | null
+          last_health_check: string | null
+          plugin_id: string
+          status: Database["public"]["Enums"]["plugin_status"]
+          updated_at: string
+        }
+        Insert: {
+          config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          installed_at?: string | null
+          installed_version?: string | null
+          is_healthy?: boolean | null
+          last_health_check?: string | null
+          plugin_id: string
+          status?: Database["public"]["Enums"]["plugin_status"]
+          updated_at?: string
+        }
+        Update: {
+          config?: Json | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          installed_at?: string | null
+          installed_version?: string | null
+          is_healthy?: boolean | null
+          last_health_check?: string | null
+          plugin_id?: string
+          status?: Database["public"]["Enums"]["plugin_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "installed_plugins_plugin_id_fkey"
+            columns: ["plugin_id"]
+            isOneToOne: true
+            referencedRelation: "plugins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plugin_installation_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          installed_plugin_id: string
+          is_error: boolean | null
+          output: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          installed_plugin_id: string
+          is_error?: boolean | null
+          output?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          installed_plugin_id?: string
+          is_error?: boolean | null
+          output?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plugin_installation_logs_installed_plugin_id_fkey"
+            columns: ["installed_plugin_id"]
+            isOneToOne: false
+            referencedRelation: "installed_plugins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plugins: {
+        Row: {
+          apt_packages: string[] | null
+          author: string | null
+          category: Database["public"]["Enums"]["plugin_category"]
+          config_template: Json | null
+          created_at: string
+          dependencies: string[] | null
+          description: string | null
+          display_name: string
+          docker_image: string | null
+          icon: string | null
+          id: string
+          is_core: boolean
+          name: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          apt_packages?: string[] | null
+          author?: string | null
+          category?: Database["public"]["Enums"]["plugin_category"]
+          config_template?: Json | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          display_name: string
+          docker_image?: string | null
+          icon?: string | null
+          id?: string
+          is_core?: boolean
+          name: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          apt_packages?: string[] | null
+          author?: string | null
+          category?: Database["public"]["Enums"]["plugin_category"]
+          config_template?: Json | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          display_name?: string
+          docker_image?: string | null
+          icon?: string | null
+          id?: string
+          is_core?: boolean
+          name?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -518,6 +657,30 @@ export type Database = {
           },
         ]
       }
+      system_settings: {
+        Row: {
+          created_at: string
+          id: string
+          key: string
+          updated_at: string
+          value: Json
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          key: string
+          updated_at?: string
+          value: Json
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          key?: string
+          updated_at?: string
+          value?: Json
+        }
+        Relationships: []
+      }
       user_2fa: {
         Row: {
           backup_codes: string[] | null
@@ -618,6 +781,23 @@ export type Database = {
       backup_status: "pending" | "in_progress" | "completed" | "failed"
       backup_type: "full" | "files" | "database" | "scheduled"
       db_type: "mysql" | "postgresql" | "mariadb"
+      plugin_category:
+        | "web_server"
+        | "email"
+        | "ftp"
+        | "dns"
+        | "backup"
+        | "database"
+        | "file_manager"
+        | "security"
+        | "monitoring"
+        | "other"
+      plugin_status:
+        | "available"
+        | "installing"
+        | "installed"
+        | "failed"
+        | "uninstalling"
       site_role: "owner" | "admin" | "developer" | "viewer"
       site_status: "active" | "pending" | "suspended" | "error"
       site_type: "wordpress" | "nodejs" | "python" | "php" | "static" | "custom"
@@ -774,6 +954,25 @@ export const Constants = {
       backup_status: ["pending", "in_progress", "completed", "failed"],
       backup_type: ["full", "files", "database", "scheduled"],
       db_type: ["mysql", "postgresql", "mariadb"],
+      plugin_category: [
+        "web_server",
+        "email",
+        "ftp",
+        "dns",
+        "backup",
+        "database",
+        "file_manager",
+        "security",
+        "monitoring",
+        "other",
+      ],
+      plugin_status: [
+        "available",
+        "installing",
+        "installed",
+        "failed",
+        "uninstalling",
+      ],
       site_role: ["owner", "admin", "developer", "viewer"],
       site_status: ["active", "pending", "suspended", "error"],
       site_type: ["wordpress", "nodejs", "python", "php", "static", "custom"],

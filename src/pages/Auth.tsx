@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Eye, EyeOff, Mail, Lock, Server, Settings, Loader2, ShieldCheck } from "lucide-react";
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { z } from "zod";
+import { useIsAdminSetupComplete } from "@/hooks/useSystemSettings";
 
 // Custom email validation that allows localhost for admin accounts
 const emailSchema = z.string().refine(
@@ -41,6 +42,9 @@ const Auth = () => {
   const [requires2FA, setRequires2FA] = useState(false);
   const [otpCode, setOtpCode] = useState("");
   const [verifying2FA, setVerifying2FA] = useState(false);
+
+  // Check if admin setup is complete
+  const { data: isAdminSetupComplete, isLoading: isCheckingSetup } = useIsAdminSetupComplete();
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -458,8 +462,8 @@ const Auth = () => {
             </button>
           </div>
 
-          {/* Default Admin Section */}
-          {isLogin && (
+          {/* Default Admin Section - Only show if setup not complete */}
+          {isLogin && !isCheckingSetup && !isAdminSetupComplete && (
             <div className="mt-6 pt-6 border-t border-border">
               <p className="text-xs text-muted-foreground text-center mb-3">
                 First time installation?
