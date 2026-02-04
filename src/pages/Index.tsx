@@ -26,6 +26,7 @@ import { SettingsPage } from "@/components/SettingsPage";
 import { ActivityLogsPage } from "@/components/ActivityLogsPage";
 import { EmailManagement } from "@/components/EmailManagement";
 import { PluginsPage } from "@/components/PluginsPage";
+import { CronJobsManagement } from "@/components/CronJobsManagement";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogActivity } from "@/hooks/useActivityLogs";
 import { useLatestMetrics, formatBytes } from "@/hooks/useSystemMetrics";
@@ -184,6 +185,8 @@ const Index = () => {
         return <FTPManager />;
       case "backups":
         return <BackupsManagement />;
+      case "cronjobs":
+        return <CronJobsManagement />;
       case "terminal":
         return <Terminal />;
       case "users":

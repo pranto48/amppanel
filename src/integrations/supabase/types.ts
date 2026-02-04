@@ -161,6 +161,65 @@ export type Database = {
           },
         ]
       }
+      cron_jobs: {
+        Row: {
+          command: string
+          created_at: string
+          description: string | null
+          id: string
+          is_enabled: boolean
+          job_type: Database["public"]["Enums"]["cron_job_type"]
+          last_output: string | null
+          last_run_at: string | null
+          last_status: Database["public"]["Enums"]["cron_job_status"] | null
+          name: string
+          next_run_at: string | null
+          schedule: string
+          site_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          command: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          job_type?: Database["public"]["Enums"]["cron_job_type"]
+          last_output?: string | null
+          last_run_at?: string | null
+          last_status?: Database["public"]["Enums"]["cron_job_status"] | null
+          name: string
+          next_run_at?: string | null
+          schedule: string
+          site_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          command?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_enabled?: boolean
+          job_type?: Database["public"]["Enums"]["cron_job_type"]
+          last_output?: string | null
+          last_run_at?: string | null
+          last_status?: Database["public"]["Enums"]["cron_job_status"] | null
+          name?: string
+          next_run_at?: string | null
+          schedule?: string
+          site_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "cron_jobs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       databases: {
         Row: {
           created_at: string
@@ -780,6 +839,8 @@ export type Database = {
       backup_frequency: "daily" | "weekly" | "monthly"
       backup_status: "pending" | "in_progress" | "completed" | "failed"
       backup_type: "full" | "files" | "database" | "scheduled"
+      cron_job_status: "success" | "failed" | "running"
+      cron_job_type: "backup" | "cleanup" | "maintenance" | "custom"
       db_type: "mysql" | "postgresql" | "mariadb"
       plugin_category:
         | "web_server"
@@ -953,6 +1014,8 @@ export const Constants = {
       backup_frequency: ["daily", "weekly", "monthly"],
       backup_status: ["pending", "in_progress", "completed", "failed"],
       backup_type: ["full", "files", "database", "scheduled"],
+      cron_job_status: ["success", "failed", "running"],
+      cron_job_type: ["backup", "cleanup", "maintenance", "custom"],
       db_type: ["mysql", "postgresql", "mariadb"],
       plugin_category: [
         "web_server",
