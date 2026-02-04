@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.plugin-manager]
 verify_jwt = false
+
+[functions.cron-runner]
+verify_jwt = false
