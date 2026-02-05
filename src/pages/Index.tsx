@@ -27,10 +27,13 @@ import { ActivityLogsPage } from "@/components/ActivityLogsPage";
 import { EmailManagement } from "@/components/EmailManagement";
 import { PluginsPage } from "@/components/PluginsPage";
 import { CronJobsManagement } from "@/components/CronJobsManagement";
+import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogActivity } from "@/hooks/useActivityLogs";
 import { useLatestMetrics, formatBytes } from "@/hooks/useSystemMetrics";
 import { cn } from "@/lib/utils";
+
+const DEFAULT_ADMIN_EMAIL = "admin_amp@localhost";
 
 // Dashboard content component with real metrics
 const DashboardContent = ({ 
@@ -136,6 +139,8 @@ const Index = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [hasLoggedLogin, setHasLoggedLogin] = useState(false);
   const [selectedSiteId, setSelectedSiteId] = useState<string | undefined>(undefined);
+  const [showPasswordChangeModal, setShowPasswordChangeModal] = useState(false);
+  const [hasCheckedPasswordChange, setHasCheckedPasswordChange] = useState(false);
   const { user, loading } = useAuth();
   const navigate = useNavigate();
   const { logLogin } = useLogActivity();
@@ -145,6 +150,29 @@ const Index = () => {
       navigate("/auth");
     }
   }, [user, loading, navigate]);
+
+  // Check if user needs to change default password
+  useEffect(() => {
+    const checkPasswordChange = async () => {
+      if (user && user.email === DEFAULT_ADMIN_EMAIL && !hasCheckedPasswordChange) {
+        try {
+          const { data: profile } = await import("@/integrations/supabase/client").then(
+            m => m.supabase.from('profiles').select('password_changed_at').eq('id', user.id).single()
+          );
+          
+          // If password_changed_at is null, user hasn't changed default password
+          if (!profile?.password_changed_at) {
+            setShowPasswordChangeModal(true);
+          }
+        } catch (error) {
+          console.error("Error checking password change status:", error);
+        }
+        setHasCheckedPasswordChange(true);
+      }
+    };
+
+    checkPasswordChange();
+  }, [user, hasCheckedPasswordChange]);
 
   // Log login activity once when user is authenticated
   useEffect(() => {
@@ -168,6 +196,10 @@ const Index = () => {
   if (!user) {
     return null;
   }
+
+  const handlePasswordChanged = () => {
+    setShowPasswordChangeModal(false);
+  };
 
   const renderContent = () => {
     switch (activeItem) {
@@ -218,6 +250,12 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background">
+      {/* Force password change modal for default credentials */}
+      <ChangePasswordModal 
+        open={showPasswordChangeModal} 
+        onPasswordChanged={handlePasswordChanged} 
+      />
+
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div 
