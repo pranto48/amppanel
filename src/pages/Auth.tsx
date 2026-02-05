@@ -44,7 +44,10 @@ const Auth = () => {
   const [verifying2FA, setVerifying2FA] = useState(false);
 
   // Check if admin setup is complete
-  const { data: isAdminSetupComplete, isLoading: isCheckingSetup } = useIsAdminSetupComplete();
+  const { data: isAdminSetupComplete, isLoading: isCheckingSetup, refetch: refetchSetupStatus } = useIsAdminSetupComplete();
+  
+  // Track if setup was just completed in this session
+  const [setupJustCompleted, setSetupJustCompleted] = useState(false);
   
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -100,6 +103,9 @@ const Auth = () => {
         setEmail(DEFAULT_ADMIN_EMAIL);
         setPassword(DEFAULT_ADMIN_PASSWORD);
         setIsLogin(true);
+        setSetupJustCompleted(true);
+        // Refetch to update the setup status
+        refetchSetupStatus();
       } else {
         throw new Error(data.error);
       }
@@ -463,51 +469,50 @@ const Auth = () => {
           </div>
 
           {/* Default Admin Section - Only show if setup not complete */}
-          {isLogin && !isCheckingSetup && !isAdminSetupComplete && (
+          {isLogin && !isCheckingSetup && !isAdminSetupComplete && !setupJustCompleted && (
             <div className="mt-6 pt-6 border-t border-border">
               <p className="text-xs text-muted-foreground text-center mb-3">
                 First time installation?
               </p>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleSetupAdmin}
-                  disabled={setupLoading}
-                  className="flex-1 text-xs"
-                >
-                  {setupLoading ? (
-                    <>
-                      <Loader2 className="w-3 h-3 mr-1 animate-spin" />
-                      Setting up...
-                    </>
-                  ) : (
-                    <>
-                      <Settings className="w-3 h-3 mr-1" />
-                      Setup Admin
-                    </>
-                  )}
-                </Button>
-                <Button
-                  type="button"
-                  variant="secondary"
-                  size="sm"
-                  onClick={handleUseDefaultCredentials}
-                  className="flex-1 text-xs"
-                >
-                  Use Default Login
-                </Button>
-              </div>
-              <div className="mt-3 p-3 rounded-lg bg-muted/50 border border-border">
-                <p className="text-xs text-muted-foreground mb-1">Default Admin Credentials:</p>
-                <p className="text-xs font-mono text-foreground">
-                  Email: <span className="text-primary">{DEFAULT_ADMIN_EMAIL}</span>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={handleSetupAdmin}
+                disabled={setupLoading}
+                className="w-full text-xs"
+              >
+                {setupLoading ? (
+                  <>
+                    <Loader2 className="w-3 h-3 mr-1 animate-spin" />
+                    Setting up...
+                  </>
+                ) : (
+                  <>
+                    <Settings className="w-3 h-3 mr-1" />
+                    Setup Admin
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+
+          {/* Show credentials after setup just completed */}
+          {isLogin && setupJustCompleted && (
+            <div className="mt-6 pt-6 border-t border-border">
+              <div className="bg-success/10 border border-success/20 rounded-lg p-4 mb-4">
+                <p className="text-sm font-medium text-success mb-2">✓ Admin Setup Complete!</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Your default admin credentials have been created:
                 </p>
-                <p className="text-xs font-mono text-foreground">
-                  Password: <span className="text-primary">{DEFAULT_ADMIN_PASSWORD}</span>
-                </p>
+                <div className="bg-background/50 rounded p-2 space-y-1 text-xs font-mono">
+                  <p><span className="text-muted-foreground">Email:</span> {DEFAULT_ADMIN_EMAIL}</p>
+                  <p><span className="text-muted-foreground">Password:</span> {DEFAULT_ADMIN_PASSWORD}</p>
+                </div>
               </div>
+              <p className="text-xs text-muted-foreground text-center">
+                Credentials are pre-filled above. Click "Sign In" to continue.
+              </p>
             </div>
           )}
         </div>
