@@ -46,7 +46,22 @@ serve(async (req) => {
       const results = [];
 
       for (const job of dueJobs || []) {
+        const startTime = Date.now();
+        let logId: string | null = null;
+
         try {
+          // Create log entry
+          const { data: logEntry } = await supabaseAdmin
+            .from('cron_job_logs')
+            .insert({
+              job_id: job.id,
+              status: 'running',
+            })
+            .select('id')
+            .single();
+          
+          logId = logEntry?.id || null;
+
           // Simulate running the command
           console.log(`Executing job: ${job.name}`);
           console.log(`Command: ${job.command}`);
@@ -60,6 +75,7 @@ serve(async (req) => {
 
           // Calculate next run time based on cron expression
           const nextRun = calculateNextRun(job.schedule);
+          const executionTime = Date.now() - startTime;
 
           // Update job status
           await supabaseAdmin
@@ -72,6 +88,20 @@ serve(async (req) => {
             })
             .eq('id', job.id);
 
+          // Update log entry
+          if (logId) {
+            await supabaseAdmin
+              .from('cron_job_logs')
+              .update({
+                completed_at: new Date().toISOString(),
+                status: success ? 'success' : 'failed',
+                output: output,
+                error_message: success ? null : 'Simulated error for testing',
+                execution_time_ms: executionTime,
+              })
+              .eq('id', logId);
+          }
+
           results.push({
             job_id: job.id,
             name: job.name,
@@ -83,6 +113,7 @@ serve(async (req) => {
           console.log(`Job ${job.name}: ${success ? 'SUCCESS' : 'FAILED'}`);
         } catch (err: any) {
           console.error(`Error executing job ${job.id}:`, err);
+          const executionTime = Date.now() - startTime;
           
           await supabaseAdmin
             .from('cron_jobs')
@@ -92,6 +123,19 @@ serve(async (req) => {
               last_output: err.message,
             })
             .eq('id', job.id);
+
+          // Update log entry with error
+          if (logId) {
+            await supabaseAdmin
+              .from('cron_job_logs')
+              .update({
+                completed_at: new Date().toISOString(),
+                status: 'failed',
+                error_message: err.message,
+                execution_time_ms: executionTime,
+              })
+              .eq('id', logId);
+          }
 
           results.push({
             job_id: job.id,
@@ -115,6 +159,7 @@ serve(async (req) => {
     // Run a specific job
     if (job_id) {
       console.log(`Running specific job: ${job_id}`);
+      const startTime = Date.now();
 
       const { data: job, error: jobError } = await supabaseAdmin
         .from('cron_jobs')
@@ -126,6 +171,17 @@ serve(async (req) => {
         throw new Error('Job not found');
       }
 
+      // Create log entry
+      const { data: logEntry } = await supabaseAdmin
+        .from('cron_job_logs')
+        .insert({
+          job_id: job_id,
+          status: 'running',
+        })
+        .select('id')
+        .single();
+
+      const logId = logEntry?.id || null;
       const now = new Date();
       
       // Simulate running the command
@@ -142,6 +198,7 @@ serve(async (req) => {
 
       // Calculate next run time
       const nextRun = calculateNextRun(job.schedule);
+      const executionTime = Date.now() - startTime;
 
       // Update job status
       await supabaseAdmin
@@ -154,12 +211,27 @@ serve(async (req) => {
         })
         .eq('id', job_id);
 
+      // Update log entry
+      if (logId) {
+        await supabaseAdmin
+          .from('cron_job_logs')
+          .update({
+            completed_at: new Date().toISOString(),
+            status: success ? 'success' : 'failed',
+            output: output,
+            error_message: success ? null : 'Command execution error',
+            execution_time_ms: executionTime,
+          })
+          .eq('id', logId);
+      }
+
       return new Response(
         JSON.stringify({
           success,
           job_id,
           output,
           next_run: nextRun,
+          execution_time_ms: executionTime,
         }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
