@@ -14,7 +14,8 @@ import {
   Terminal,
   Archive,
   Trash,
-  Wrench
+  Wrench,
+  History
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -60,6 +61,7 @@ import {
 import { useCronJobs, useCreateCronJob, useUpdateCronJob, useDeleteCronJob, useRunCronJob, type CronJob, type CronJobType } from "@/hooks/useCronJobs";
 import { useSites } from "@/hooks/useSites";
 import { formatDistanceToNow } from "date-fns";
+import { CronJobLogsDialog } from "@/components/CronJobLogsDialog";
 
 interface CronJobFormData {
   name: string;
@@ -95,6 +97,7 @@ export const CronJobsManagement = () => {
   const [editingJob, setEditingJob] = useState<CronJob | null>(null);
   const [deleteJobId, setDeleteJobId] = useState<string | null>(null);
   const [selectedPreset, setSelectedPreset] = useState("");
+  const [logsJob, setLogsJob] = useState<CronJob | null>(null);
   
   const [formData, setFormData] = useState<CronJobFormData>({
     name: "",
@@ -485,6 +488,14 @@ export const CronJobsManagement = () => {
                           <Button
                             variant="ghost"
                             size="icon"
+                            onClick={() => setLogsJob(job)}
+                            title="View execution history"
+                          >
+                            <History className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
                             onClick={() => openEditDialog(job)}
                             title="Edit"
                           >
@@ -544,6 +555,13 @@ export const CronJobsManagement = () => {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Logs Dialog */}
+      <CronJobLogsDialog
+        job={logsJob}
+        open={!!logsJob}
+        onOpenChange={(open) => !open && setLogsJob(null)}
+      />
     </div>
   );
 };
