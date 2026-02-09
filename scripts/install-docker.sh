@@ -1,71 +1,37 @@
 #!/bin/bash
 
 # AMP Panel Docker Quick Start
-# Usage: ./install-docker.sh
+# Usage: bash scripts/install-docker.sh
 
 set -e
 
 # Colors
 GREEN='\033[0;32m'
 BLUE='\033[0;34m'
+YELLOW='\033[1;33m'
 NC='\033[0m'
 
-echo -e "${BLUE}[*]${NC} Creating AMP Panel directory..."
-mkdir -p amp-panel && cd amp-panel
+# Get the directory where the script is located
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 
-echo -e "${BLUE}[*]${NC} Downloading configuration..."
-cat > docker-compose.yml << 'EOF'
-version: '3.8'
+echo -e "${BLUE}[*]${NC} Starting AMP Panel from: $PROJECT_DIR"
 
-services:
-  amp-panel:
-    image: ghcr.io/amp-panel/amp-panel:latest
-    container_name: amp-panel
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./data:/app/data
-      - ./sites:/var/www
-      - ./backups:/backups
-      - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - amp-network
+cd "$PROJECT_DIR"
 
-  postgres:
-    image: postgres:16-alpine
-    container_name: amp-postgres
-    restart: unless-stopped
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      - POSTGRES_USER=amp
-      - POSTGRES_PASSWORD=amp_secure_password_2024
-      - POSTGRES_DB=amp_panel
-    networks:
-      - amp-network
+# Check if Docker is installed
+if ! command -v docker &> /dev/null; then
+  echo -e "${YELLOW}[!]${NC} Docker not found. Installing..."
+  curl -fsSL https://get.docker.com -o get-docker.sh
+  sudo sh get-docker.sh
+  rm get-docker.sh
+fi
 
-  redis:
-    image: redis:7-alpine
-    container_name: amp-redis
-    restart: unless-stopped
-    volumes:
-      - redis_data:/data
-    networks:
-      - amp-network
+# Create directories
+mkdir -p data sites backups
 
-volumes:
-  postgres_data:
-  redis_data:
-
-networks:
-  amp-network:
-    driver: bridge
-EOF
-
-echo -e "${BLUE}[*]${NC} Starting containers..."
-docker compose up -d
+echo -e "${BLUE}[*]${NC} Building and starting containers..."
+docker compose up --build -d
 
 echo ""
 echo -e "${GREEN}[✓]${NC} AMP Panel is starting!"
