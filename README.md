@@ -20,16 +20,22 @@ A modern, open-source server control panel for managing web hosting services. Bu
 
 ## Quick Start
 
+```bash
+# Clone the repository
+git clone https://github.com/pranto48/amppanel.git
+cd amppanel
+```
+
 ### Docker (Recommended)
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/amp-panel/amp-panel/main/scripts/install-docker.sh | bash
+docker-compose up --build -d
 ```
 
 ### Ubuntu Server
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/amp-panel/amp-panel/main/scripts/install-ubuntu.sh | sudo bash
+sudo bash scripts/install-ubuntu.sh
 ```
 
 ## Documentation
