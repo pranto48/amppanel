@@ -253,9 +253,14 @@ export const Sidebar = ({
         "px-4 py-2 border-t border-sidebar-border",
         collapsed && "px-2 text-center"
       )}>
-        <p className="text-[10px] text-muted-foreground/60 font-mono">
+        <a
+          href={`https://github.com/Jeamorg/amp-panel/commit/${import.meta.env.VITE_GIT_HASH || 'main'}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-[10px] text-muted-foreground/60 font-mono hover:text-primary transition-colors"
+        >
           {collapsed ? (import.meta.env.VITE_GIT_HASH || 'dev') : `AMP Panel · ${import.meta.env.VITE_GIT_HASH || 'dev'}`}
-        </p>
+        </a>
       </div>
     </aside>
   );
