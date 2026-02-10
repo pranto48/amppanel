@@ -247,6 +247,16 @@ export const Sidebar = ({
           )}
         </button>
       </div>
+
+      {/* Version */}
+      <div className={cn(
+        "px-4 py-2 border-t border-sidebar-border",
+        collapsed && "px-2 text-center"
+      )}>
+        <p className="text-[10px] text-muted-foreground/60 font-mono">
+          {collapsed ? __GIT_HASH__ : `AMP Panel · ${__GIT_HASH__}`}
+        </p>
+      </div>
     </aside>
   );
 };
