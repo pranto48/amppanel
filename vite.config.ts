@@ -15,7 +15,7 @@ const getGitHash = () => {
 
 export default defineConfig(({ mode }) => ({
   define: {
-    __GIT_HASH__: JSON.stringify(getGitHash()),
+    'import.meta.env.VITE_GIT_HASH': JSON.stringify(getGitHash()),
   },
   server: {
     host: "::",
