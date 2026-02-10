@@ -253,14 +253,20 @@ export const Sidebar = ({
         "px-4 py-2 border-t border-sidebar-border",
         collapsed && "px-2 text-center"
       )}>
-        <a
-          href={`https://github.com/Jeamorg/amp-panel/commit/${import.meta.env.VITE_GIT_HASH || 'main'}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-[10px] text-muted-foreground/60 font-mono hover:text-primary transition-colors"
-        >
-          {collapsed ? (import.meta.env.VITE_GIT_HASH || 'dev') : `AMP Panel · ${import.meta.env.VITE_GIT_HASH || 'dev'}`}
-        </a>
+        {import.meta.env.VITE_GITHUB_REPO_URL ? (
+          <a
+            href={`${import.meta.env.VITE_GITHUB_REPO_URL}/commit/${import.meta.env.VITE_GIT_HASH || 'main'}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-[10px] text-muted-foreground/60 font-mono hover:text-primary transition-colors"
+          >
+            {collapsed ? (import.meta.env.VITE_GIT_HASH || 'dev') : `AMP Panel · ${import.meta.env.VITE_GIT_HASH || 'dev'}`}
+          </a>
+        ) : (
+          <p className="text-[10px] text-muted-foreground/60 font-mono">
+            {collapsed ? (import.meta.env.VITE_GIT_HASH || 'dev') : `AMP Panel · ${import.meta.env.VITE_GIT_HASH || 'dev'}`}
+          </p>
+        )}
       </div>
     </aside>
   );
