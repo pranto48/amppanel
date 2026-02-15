@@ -115,36 +115,33 @@ serve(async (req) => {
         
         if (listError) throw listError;
 
-        const adminExists = existingUsers.users.some(
+        // Always recreate admin to ensure clean state
+        // Delete existing admin user and recreate to ensure clean state
+        const existingAdmin = existingUsers.users.find(
           (user) => user.email === DEFAULT_ADMIN_EMAIL
         );
-
-        if (adminExists) {
-          return new Response(
-            JSON.stringify({ 
-              success: true, 
-              message: 'Default admin already exists',
-              credentials: { email: DEFAULT_ADMIN_EMAIL, password: '(already set)' }
-            }),
-            { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
+        if (existingAdmin) {
+          await supabaseAdmin.auth.admin.deleteUser(existingAdmin.id);
         }
 
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email: DEFAULT_ADMIN_EMAIL,
           password: DEFAULT_ADMIN_PASSWORD,
           email_confirm: true,
-          user_metadata: { role: 'admin', is_default_admin: true },
+          user_metadata: { role: 'admin', is_default_admin: true, full_name: 'Admin' },
         });
 
         if (createError) throw createError;
 
-        // Assign super_admin role
+        // Create profile and role manually (trigger may not fire for admin API)
         if (newUser.user) {
           await supabaseAdmin
-            .from('user_roles')
-            .update({ role: 'super_admin' })
-            .eq('user_id', newUser.user.id);
+            .from('profiles')
+            .upsert({ id: newUser.user.id, email: DEFAULT_ADMIN_EMAIL, full_name: 'Admin' }, { onConflict: 'id' });
+
+          // Delete default role from trigger, then insert super_admin
+          await supabaseAdmin.from('user_roles').delete().eq('user_id', newUser.user.id);
+          await supabaseAdmin.from('user_roles').insert({ user_id: newUser.user.id, role: 'super_admin' });
         }
 
         // Mark admin setup as complete
