@@ -38,6 +38,16 @@ serve(async (req) => {
           );
         }
 
+        // Check if user already exists
+        const { data: existingList } = await supabaseAdmin.auth.admin.listUsers();
+        const existingUser = existingList?.users?.find((u) => u.email === email);
+        if (existingUser) {
+          return new Response(
+            JSON.stringify({ error: `A user with email "${email}" already exists` }),
+            { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+
         // Create user
         const { data: newUser, error: createError } = await supabaseAdmin.auth.admin.createUser({
           email,
@@ -48,20 +58,17 @@ serve(async (req) => {
 
         if (createError) throw createError;
 
-        // Update profile with full_name
-        if (full_name && newUser.user) {
+        // Create profile manually in case trigger doesn't fire
+        if (newUser.user) {
           await supabaseAdmin
             .from('profiles')
-            .update({ full_name })
-            .eq('id', newUser.user.id);
+            .upsert({ id: newUser.user.id, email, full_name: full_name || '' }, { onConflict: 'id' });
         }
 
         // Update role if specified and not default 'user'
         if (role && role !== 'user' && newUser.user) {
-          await supabaseAdmin
-            .from('user_roles')
-            .update({ role })
-            .eq('user_id', newUser.user.id);
+          await supabaseAdmin.from('user_roles').delete().eq('user_id', newUser.user.id);
+          await supabaseAdmin.from('user_roles').insert({ user_id: newUser.user.id, role });
         }
 
         return new Response(
