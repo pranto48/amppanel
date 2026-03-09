@@ -141,6 +141,48 @@ services:
           cpus: '0.1'
           memory: 32M
 
+  pg-backup:
+    image: postgres:16-alpine
+    container_name: amp-pg-backup
+    restart: unless-stopped
+    volumes:
+      - ./backups:/backups
+      - ./scripts/pg-backup.sh:/usr/local/bin/pg-backup.sh:ro
+      - ./scripts/pg-restore.sh:/usr/local/bin/pg-restore.sh:ro
+    environment:
+      - PGHOST=postgres
+      - PGPORT=5432
+      - PGUSER=amp
+      - PGPASSWORD=${DB_PASSWORD:-amp_secure_2024}
+      - PGDATABASE=amp_panel
+      - BACKUP_DIR=/backups/postgres
+      - BACKUP_RETENTION_DAYS=${BACKUP_RETENTION_DAYS:-7}
+      - BACKUP_RETENTION_WEEKLY=${BACKUP_RETENTION_WEEKLY:-4}
+      - BACKUP_RETENTION_MONTHLY=${BACKUP_RETENTION_MONTHLY:-6}
+    entrypoint: /bin/sh
+    command: >
+      -c "chmod +x /usr/local/bin/pg-backup.sh /usr/local/bin/pg-restore.sh &&
+          echo '${BACKUP_CRON_SCHEDULE:-0 2 * * *} /usr/local/bin/pg-backup.sh >> /var/log/pg-backup.log 2>&1' > /etc/crontabs/root &&
+          crond -f -l 2"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - amp-network
+    logging:
+      driver: json-file
+      options:
+        max-size: "5m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
+        reservations:
+          cpus: '0.1'
+          memory: 64M
+
 volumes:
   postgres_data:
   redis_data:
