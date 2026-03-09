@@ -33,6 +33,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+    deploy:
+      resources:
+        limits:
+          cpus: '${AMP_PANEL_CPU_LIMIT:-1.0}'
+          memory: ${AMP_PANEL_MEMORY_LIMIT:-512M}
+        reservations:
+          cpus: '0.25'
+          memory: 128M
 
   postgres:
     image: postgres:16-alpine
@@ -52,6 +60,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '${POSTGRES_CPU_LIMIT:-1.0}'
+          memory: ${POSTGRES_MEMORY_LIMIT:-1G}
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   redis:
     image: redis:7-alpine
@@ -67,6 +83,14 @@ services:
       timeout: 5s
       retries: 5
       start_period: 5s
+    deploy:
+      resources:
+        limits:
+          cpus: '${REDIS_CPU_LIMIT:-0.5}'
+          memory: ${REDIS_MEMORY_LIMIT:-256M}
+        reservations:
+          cpus: '0.1'
+          memory: 64M
 
   nginx:
     image: nginx:alpine
@@ -88,6 +112,14 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '${NGINX_CPU_LIMIT:-0.5}'
+          memory: ${NGINX_MEMORY_LIMIT:-128M}
+        reservations:
+          cpus: '0.1'
+          memory: 32M
 
 volumes:
   postgres_data:
