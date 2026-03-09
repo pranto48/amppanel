@@ -73,16 +73,19 @@ git clone https://github.com/pranto48/amppanel.git
 cd amppanel
 
 # Start all services
-docker-compose up --build -d
+docker compose up --build -d
 
 # View logs
-docker-compose logs -f
+docker compose logs -f
 
 # Check status
-docker-compose ps
+docker compose ps
+
+# Monitor resource usage
+docker stats
 ```
 
-#### Configuration (Optional)
+#### Configuration
 
 Create a `.env` file to customize your installation:
 
@@ -91,13 +94,27 @@ Create a `.env` file to customize your installation:
 AMP_DOMAIN=your-domain.com
 AMP_ADMIN_EMAIL=admin_amp@localhost
 
+# Port Configuration (change if defaults are in use)
+AMP_HTTP_PORT=8880
+AMP_HTTPS_PORT=8443
+
 # Database
 DB_PASSWORD=your-secure-password-here
 
+# Resource Limits (optional)
+AMP_PANEL_CPU_LIMIT=1.0
+AMP_PANEL_MEMORY_LIMIT=512M
+POSTGRES_CPU_LIMIT=1.0
+POSTGRES_MEMORY_LIMIT=1G
+REDIS_CPU_LIMIT=0.5
+REDIS_MEMORY_LIMIT=256M
+
 # Supabase (provided by your AMP Panel license)
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_ANON_KEY=your-anon-key
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=your-anon-key
 ```
+
+**Access URL:** `http://localhost:8880` (or your configured port)
 
 ---
 
