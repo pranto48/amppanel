@@ -103,13 +103,12 @@ export const useBackupNotifications = () => {
   // Send email notification (requires edge function)
   const sendEmailNotification = useCallback(async (
     email: string,
-    subject: string,
-    message: string,
-    type: "success" | "error"
+    type: "backup_completed" | "backup_failed",
+    data: Record<string, any>
   ) => {
     try {
-      const { error } = await supabase.functions.invoke("backup-notification", {
-        body: { email, subject, message, type },
+      const { error } = await supabase.functions.invoke("send-notification-email", {
+        body: { to: email, type, data },
       });
       if (error) throw error;
       return true;
