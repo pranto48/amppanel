@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useBackupEmailNotification } from "@/hooks/useEmailNotifications";
 
 export interface Backup {
   id: string;
@@ -45,10 +46,10 @@ export const useBackups = (siteId?: string) => {
 
 export const useCreateBackup = () => {
   const queryClient = useQueryClient();
+  const { notifyBackupCompleted, notifyBackupFailed } = useBackupEmailNotification();
 
   return useMutation({
     mutationFn: async (backup: BackupInsert) => {
-      // Simulate backup creation with random size
       const simulatedSize = Math.floor(Math.random() * 500) + 50;
       
       const { data, error } = await supabase
@@ -58,7 +59,7 @@ export const useCreateBackup = () => {
           size_mb: simulatedSize,
           status: "completed" as const,
           completed_at: new Date().toISOString(),
-          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(), // 30 days
+          expires_at: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
         })
         .select()
         .single();
@@ -66,18 +67,37 @@ export const useCreateBackup = () => {
       if (error) throw error;
       return data;
     },
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       queryClient.invalidateQueries({ queryKey: ["backups"] });
-      // Dispatch custom event for notification system
       window.dispatchEvent(new CustomEvent("backup-complete", { 
         detail: { backup: data, status: "completed" }
       }));
+
+      // Send email notification (fire-and-forget)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        notifyBackupCompleted(user.email, {
+          siteName: data.site_id,
+          backupName: data.name,
+          size: `${data.size_mb} MB`,
+          type: data.backup_type,
+        }).catch(() => {}); // Don't block on email failure
+      }
     },
-    onError: (error, variables) => {
-      // Dispatch custom event for notification system
+    onError: async (error, variables) => {
       window.dispatchEvent(new CustomEvent("backup-complete", { 
         detail: { backupName: variables.name, siteId: variables.site_id, status: "failed", error: error.message }
       }));
+
+      // Send failure email (fire-and-forget)
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.email) {
+        notifyBackupFailed(user.email, {
+          siteName: variables.site_id,
+          backupName: variables.name,
+          error: error.message,
+        }).catch(() => {});
+      }
     },
   });
 };
