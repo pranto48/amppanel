@@ -1,23 +1,28 @@
-import { useState } from "react";
+import { type ElementType, useEffect, useMemo, useState } from "react";
 import {
+  AlertCircle,
+  CheckCircle2,
+  Clock3,
+  FileText,
   Globe,
+  Link,
+  Mail,
   Plus,
-  Trash2,
-  Edit2,
+  Radio,
   RefreshCw,
+  Save,
   Search,
   Server,
-  Mail,
-  FileText,
-  Link,
-  Clock,
-  CheckCircle,
-  AlertCircle,
+  ShieldCheck,
+  Trash2,
+  Workflow,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
+import { Textarea } from "@/components/ui/textarea";
 import {
   Table,
   TableBody,
@@ -30,9 +35,9 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from "@/components/ui/dialog";
 import {
   Select,
@@ -41,89 +46,47 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
+import {
+  type DnsRecordInput,
+  type DnsRecordType,
+  type DnsZone,
+  useApplyDnsTemplate,
+  useCreateDnsZone,
+  useDeleteDnsRecord,
+  useDnsClusters,
+  useDnsTemplates,
+  useDnsZones,
+  useRunDnsPropagationCheck,
+  useSaveDnsGlue,
+  useSaveDnsRecord,
+  useSaveDnsSecondary,
+} from "@/hooks/useDnsControlPlane";
 
-interface DNSRecord {
-  id: string;
-  type: "A" | "AAAA" | "CNAME" | "MX" | "TXT" | "NS" | "SRV";
-  name: string;
-  value: string;
-  ttl: number;
-  priority?: number;
-  status: "active" | "pending" | "error";
-}
+const emptyRecordForm: DnsRecordInput = {
+  type: "A",
+  name: "@",
+  content: "",
+  ttl: 3600,
+  priority: 10,
+  weight: 10,
+  port: 443,
+  target: "",
+  proxied: false,
+  is_glue: false,
+};
 
-interface Domain {
-  id: string;
-  name: string;
-  status: "active" | "pending" | "expired";
-  expiresAt: string;
-  nameservers: string[];
-  records: DNSRecord[];
-}
-
-// Mock data
-const initialDomains: Domain[] = [
-  {
-    id: "1",
-    name: "example.com",
-    status: "active",
-    expiresAt: "2027-01-15",
-    nameservers: ["ns1.amp-dns.com", "ns2.amp-dns.com"],
-    records: [
-      { id: "r1", type: "A", name: "@", value: "192.168.1.100", ttl: 3600, status: "active" },
-      { id: "r2", type: "A", name: "www", value: "192.168.1.100", ttl: 3600, status: "active" },
-      { id: "r3", type: "CNAME", name: "mail", value: "mail.example.com", ttl: 3600, status: "active" },
-      { id: "r4", type: "MX", name: "@", value: "mail.example.com", ttl: 3600, priority: 10, status: "active" },
-      { id: "r5", type: "TXT", name: "@", value: "v=spf1 include:_spf.google.com ~all", ttl: 3600, status: "active" },
-      { id: "r6", type: "TXT", name: "_dmarc", value: "v=DMARC1; p=quarantine; rua=mailto:admin@example.com", ttl: 3600, status: "active" },
-    ],
-  },
-  {
-    id: "2",
-    name: "myapp.io",
-    status: "active",
-    expiresAt: "2026-08-22",
-    nameservers: ["ns1.amp-dns.com", "ns2.amp-dns.com"],
-    records: [
-      { id: "r7", type: "A", name: "@", value: "10.0.0.50", ttl: 3600, status: "active" },
-      { id: "r8", type: "A", name: "www", value: "10.0.0.50", ttl: 3600, status: "active" },
-      { id: "r9", type: "A", name: "api", value: "10.0.0.51", ttl: 300, status: "active" },
-      { id: "r10", type: "CNAME", name: "cdn", value: "cdn.cloudflare.com", ttl: 3600, status: "pending" },
-      { id: "r11", type: "TXT", name: "@", value: "google-site-verification=abc123xyz", ttl: 3600, status: "active" },
-    ],
-  },
-  {
-    id: "3",
-    name: "testsite.org",
-    status: "pending",
-    expiresAt: "2026-12-01",
-    nameservers: ["ns1.amp-dns.com", "ns2.amp-dns.com"],
-    records: [
-      { id: "r12", type: "A", name: "@", value: "172.16.0.10", ttl: 3600, status: "pending" },
-    ],
-  },
-];
-
-const recordTypeIcons: Record<string, React.ElementType> = {
+const recordTypeIcons: Record<string, ElementType> = {
   A: Server,
   AAAA: Server,
   CNAME: Link,
   MX: Mail,
   TXT: FileText,
   NS: Globe,
-  SRV: Server,
+  SRV: Workflow,
+  CAA: ShieldCheck,
+  PTR: Radio,
 };
 
 const recordTypeColors: Record<string, string> = {
@@ -133,547 +96,492 @@ const recordTypeColors: Record<string, string> = {
   MX: "bg-warning/20 text-warning border-warning/30",
   TXT: "bg-success/20 text-success border-success/30",
   NS: "bg-muted text-muted-foreground border-border",
-  SRV: "bg-muted text-muted-foreground border-border",
+  SRV: "bg-secondary text-secondary-foreground border-border",
+  CAA: "bg-success/20 text-success border-success/30",
+  PTR: "bg-muted text-muted-foreground border-border",
 };
 
+function formatTtl(ttl: number) {
+  if (ttl >= 86400) return `${ttl / 86400}d`;
+  if (ttl >= 3600) return `${ttl / 3600}h`;
+  if (ttl >= 60) return `${ttl / 60}m`;
+  return `${ttl}s`;
+}
+
+function statusBadge(status: string) {
+  switch (status) {
+    case "active":
+    case "healthy":
+      return <Badge variant="outline" className="bg-success/20 text-success border-success/30"><CheckCircle2 className="w-3 h-3 mr-1" />{status}</Badge>;
+    case "pending":
+    case "warning":
+      return <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30"><Clock3 className="w-3 h-3 mr-1" />{status}</Badge>;
+    default:
+      return <Badge variant="outline" className="bg-destructive/20 text-destructive border-destructive/30"><AlertCircle className="w-3 h-3 mr-1" />{status}</Badge>;
+  }
+}
+
+function inferRecordPlaceholder(type: DnsRecordType) {
+  switch (type) {
+    case "A": return "198.51.100.10";
+    case "AAAA": return "2001:db8::10";
+    case "CNAME": return "edge.example.net";
+    case "MX": return "mail.example.com";
+    case "TXT": return "v=spf1 include:_spf.google.com ~all";
+    case "NS": return "ns1.amp-dns.com";
+    case "CAA": return "0 issue \"letsencrypt.org\"";
+    case "PTR": return "host.example.com";
+    default: return "value";
+  }
+}
+
 export const DNSManager = () => {
-  const [domains, setDomains] = useState<Domain[]>(initialDomains);
-  const [selectedDomain, setSelectedDomain] = useState<Domain | null>(initialDomains[0]);
+  const { toast } = useToast();
+  const zonesQuery = useDnsZones();
+  const templatesQuery = useDnsTemplates();
+  const clustersQuery = useDnsClusters();
+  const createZone = useCreateDnsZone();
+  const saveRecord = useSaveDnsRecord();
+  const deleteRecord = useDeleteDnsRecord();
+  const saveGlue = useSaveDnsGlue();
+  const saveSecondary = useSaveDnsSecondary();
+  const runPropagation = useRunDnsPropagationCheck();
+  const applyTemplate = useApplyDnsTemplate();
+
+  const zones = zonesQuery.data ?? [];
+  const templates = templatesQuery.data ?? [];
+  const clusters = clustersQuery.data ?? [];
+
+  const [selectedZoneId, setSelectedZoneId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [recordDialogOpen, setRecordDialogOpen] = useState(false);
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [editingRecord, setEditingRecord] = useState<DNSRecord | null>(null);
-  const [recordToDelete, setRecordToDelete] = useState<DNSRecord | null>(null);
-  const { toast } = useToast();
+  const [recordForm, setRecordForm] = useState<DnsRecordInput>(emptyRecordForm);
+  const [templateId, setTemplateId] = useState<string>("");
+  const [glueForm, setGlueForm] = useState({ hostname: "", ipv4: "", ipv6: "" });
+  const [secondaryForm, setSecondaryForm] = useState({ hostname: "", ipv4: "", ipv6: "" });
 
-  // New/edit record form state
-  const [recordForm, setRecordForm] = useState({
-    type: "A" as DNSRecord["type"],
-    name: "",
-    value: "",
-    ttl: 3600,
-    priority: 10,
-  });
+  useEffect(() => {
+    if (!selectedZoneId && zones[0]?.id) setSelectedZoneId(zones[0].id);
+    if (selectedZoneId && !zones.some((zone) => zone.id === selectedZoneId)) {
+      setSelectedZoneId(zones[0]?.id ?? null);
+    }
+  }, [zones, selectedZoneId]);
 
-  const handleAddRecord = () => {
-    setEditingRecord(null);
-    setRecordForm({ type: "A", name: "", value: "", ttl: 3600, priority: 10 });
-    setRecordDialogOpen(true);
-  };
+  const selectedZone = useMemo(() => zones.find((zone) => zone.id === selectedZoneId) ?? null, [zones, selectedZoneId]);
 
-  const handleEditRecord = (record: DNSRecord) => {
-    setEditingRecord(record);
-    setRecordForm({
+  const filteredRecords = useMemo(() => {
+    if (!selectedZone) return [];
+    return selectedZone.dns_records.filter((record) =>
+      [record.type, record.name, record.content].some((value) => value.toLowerCase().includes(searchQuery.toLowerCase()))
+    );
+  }, [selectedZone, searchQuery]);
+
+  const totalRecords = zones.reduce((sum, zone) => sum + zone.dns_records.length, 0);
+  const pendingChecks = zones.reduce((sum, zone) => sum + zone.dns_propagation_checks.filter((check) => check.status === "pending" || check.status === "warning").length, 0);
+
+  const openCreateRecord = (record?: DnsZone["dns_records"][number]) => {
+    setRecordForm(record ? {
+      id: record.id,
       type: record.type,
       name: record.name,
-      value: record.value,
+      content: record.content,
       ttl: record.ttl,
-      priority: record.priority || 10,
-    });
+      priority: record.priority,
+      weight: record.weight,
+      port: record.port,
+      target: record.target,
+      proxied: record.proxied,
+      is_glue: record.is_glue,
+    } : emptyRecordForm);
     setRecordDialogOpen(true);
   };
 
-  const handleSaveRecord = () => {
-    if (!selectedDomain) return;
+  const handleSaveRecord = async () => {
+    if (!selectedZone) return;
+    try {
+      await saveRecord.mutateAsync({ zone_id: selectedZone.id, record_id: recordForm.id, payload: recordForm });
+      setRecordDialogOpen(false);
+      toast({ title: recordForm.id ? "Record updated" : "Record created", description: "Authoritative DNS has been queued for validation and propagation." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Unable to save record", description: error instanceof Error ? error.message : "Unknown error" });
+    }
+  };
 
-    if (!recordForm.name || !recordForm.value) {
-      toast({
-        variant: "destructive",
-        title: "Validation Error",
-        description: "Name and value are required.",
-      });
+  const handleDeleteRecord = async (recordId: string) => {
+    if (!selectedZone) return;
+    try {
+      await deleteRecord.mutateAsync({ zone_id: selectedZone.id, record_id: recordId });
+      toast({ title: "Record deleted", description: "The record was removed from the zone serial." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Delete failed", description: error instanceof Error ? error.message : "Unknown error" });
+    }
+  };
+
+  const handleRunPropagation = async () => {
+    if (!selectedZone) return;
+    try {
+      await runPropagation.mutateAsync({ zone_id: selectedZone.id });
+      toast({ title: "Propagation check complete", description: "Resolvers were sampled and the latest observations were stored." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Propagation check failed", description: error instanceof Error ? error.message : "Unknown error" });
+    }
+  };
+
+  const handleApplyTemplate = async () => {
+    if (!selectedZone || !templateId) return;
+    try {
+      await applyTemplate.mutateAsync({ zone_id: selectedZone.id, template_id: templateId });
+      toast({ title: "Template applied", description: "Template records were materialized into the zone." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Template failed", description: error instanceof Error ? error.message : "Unknown error" });
+    }
+  };
+
+  const handleCreateZone = async () => {
+    const siteId = selectedZone?.site_id;
+    if (!siteId) {
+      toast({ variant: "destructive", title: "No site context", description: "Create zones from a site-linked zone context after sites are present." });
       return;
     }
-
-    const updatedDomains = domains.map((domain) => {
-      if (domain.id !== selectedDomain.id) return domain;
-
-      if (editingRecord) {
-        // Update existing record
-        return {
-          ...domain,
-          records: domain.records.map((r) =>
-            r.id === editingRecord.id
-              ? {
-                  ...r,
-                  type: recordForm.type,
-                  name: recordForm.name,
-                  value: recordForm.value,
-                  ttl: recordForm.ttl,
-                  priority: recordForm.type === "MX" ? recordForm.priority : undefined,
-                  status: "pending" as const,
-                }
-              : r
-          ),
-        };
-      } else {
-        // Add new record
-        const newRecord: DNSRecord = {
-          id: `r${Date.now()}`,
-          type: recordForm.type,
-          name: recordForm.name,
-          value: recordForm.value,
-          ttl: recordForm.ttl,
-          priority: recordForm.type === "MX" ? recordForm.priority : undefined,
-          status: "pending",
-        };
-        return { ...domain, records: [...domain.records, newRecord] };
-      }
-    });
-
-    setDomains(updatedDomains);
-    setSelectedDomain(updatedDomains.find((d) => d.id === selectedDomain.id) || null);
-    setRecordDialogOpen(false);
-
-    toast({
-      title: editingRecord ? "Record Updated" : "Record Added",
-      description: `DNS record has been ${editingRecord ? "updated" : "added"}. Changes will propagate shortly.`,
-    });
-  };
-
-  const handleDeleteRecord = () => {
-    if (!selectedDomain || !recordToDelete) return;
-
-    const updatedDomains = domains.map((domain) => {
-      if (domain.id !== selectedDomain.id) return domain;
-      return {
-        ...domain,
-        records: domain.records.filter((r) => r.id !== recordToDelete.id),
-      };
-    });
-
-    setDomains(updatedDomains);
-    setSelectedDomain(updatedDomains.find((d) => d.id === selectedDomain.id) || null);
-    setDeleteDialogOpen(false);
-    setRecordToDelete(null);
-
-    toast({
-      title: "Record Deleted",
-      description: "DNS record has been removed.",
-    });
-  };
-
-  const filteredRecords = selectedDomain?.records.filter(
-    (record) =>
-      record.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.value.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      record.type.toLowerCase().includes(searchQuery.toLowerCase())
-  );
-
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "active":
-        return (
-          <Badge variant="outline" className="bg-success/20 text-success border-success/30">
-            <CheckCircle className="w-3 h-3 mr-1" />
-            Active
-          </Badge>
-        );
-      case "pending":
-        return (
-          <Badge variant="outline" className="bg-warning/20 text-warning border-warning/30">
-            <Clock className="w-3 h-3 mr-1" />
-            Pending
-          </Badge>
-        );
-      case "error":
-        return (
-          <Badge variant="outline" className="bg-destructive/20 text-destructive border-destructive/30">
-            <AlertCircle className="w-3 h-3 mr-1" />
-            Error
-          </Badge>
-        );
-      default:
-        return null;
+    try {
+      await createZone.mutateAsync({ site_id: siteId });
+      toast({ title: "Zone ensured", description: "A primary zone now exists for the linked site." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Zone creation failed", description: error instanceof Error ? error.message : "Unknown error" });
     }
   };
 
-  const formatTTL = (ttl: number) => {
-    if (ttl >= 86400) return `${ttl / 86400}d`;
-    if (ttl >= 3600) return `${ttl / 3600}h`;
-    if (ttl >= 60) return `${ttl / 60}m`;
-    return `${ttl}s`;
+  const handleSaveGlue = async () => {
+    if (!selectedZone) return;
+    try {
+      await saveGlue.mutateAsync({ zone_id: selectedZone.id, payload: glueForm });
+      setGlueForm({ hostname: "", ipv4: "", ipv6: "" });
+      toast({ title: "Glue record saved", description: "Child nameserver glue is ready for registrar delegation." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Glue save failed", description: error instanceof Error ? error.message : "Unknown error" });
+    }
+  };
+
+  const handleSaveSecondary = async () => {
+    if (!selectedZone) return;
+    try {
+      await saveSecondary.mutateAsync({ zone_id: selectedZone.id, payload: secondaryForm });
+      setSecondaryForm({ hostname: "", ipv4: "", ipv6: "" });
+      toast({ title: "Secondary nameserver saved", description: "Zone transfer metadata has been updated for this secondary." });
+    } catch (error) {
+      toast({ variant: "destructive", title: "Secondary save failed", description: error instanceof Error ? error.message : "Unknown error" });
+    }
   };
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
         <div>
-          <h2 className="text-2xl font-bold text-foreground">DNS Manager</h2>
-          <p className="text-muted-foreground">
-            Manage DNS records for your domains
-          </p>
+          <h2 className="text-2xl font-bold text-foreground">DNS Control Plane</h2>
+          <p className="text-muted-foreground">Manage authoritative zones, reusable templates, glue, secondary DNS, and propagation validation from live Supabase data.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => zonesQuery.refetch()}>
+            <RefreshCw className="w-4 h-4 mr-2" />Refresh
+          </Button>
+          <Button onClick={handleRunPropagation} disabled={!selectedZone || runPropagation.isPending}>
+            <Radio className="w-4 h-4 mr-2" />Run propagation check
+          </Button>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-primary/20 flex items-center justify-center">
-              <Globe className="w-5 h-5 text-primary" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">{domains.length}</p>
-              <p className="text-sm text-muted-foreground">Domains</p>
-            </div>
-          </div>
-        </div>
-        <div className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-info/20 flex items-center justify-center">
-              <Server className="w-5 h-5 text-info" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">
-                {domains.reduce((acc, d) => acc + d.records.filter((r) => r.type === "A").length, 0)}
-              </p>
-              <p className="text-sm text-muted-foreground">A Records</p>
-            </div>
-          </div>
-        </div>
-        <div className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center">
-              <Mail className="w-5 h-5 text-warning" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">
-                {domains.reduce((acc, d) => acc + d.records.filter((r) => r.type === "MX").length, 0)}
-              </p>
-              <p className="text-sm text-muted-foreground">MX Records</p>
-            </div>
-          </div>
-        </div>
-        <div className="glass-card rounded-xl p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
-              <FileText className="w-5 h-5 text-success" />
-            </div>
-            <div>
-              <p className="text-2xl font-bold text-foreground">
-                {domains.reduce((acc, d) => acc + d.records.filter((r) => r.type === "TXT").length, 0)}
-              </p>
-              <p className="text-sm text-muted-foreground">TXT Records</p>
-            </div>
-          </div>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="glass-card rounded-xl p-4"><p className="text-2xl font-bold">{zones.length}</p><p className="text-sm text-muted-foreground">Zones</p></div>
+        <div className="glass-card rounded-xl p-4"><p className="text-2xl font-bold">{totalRecords}</p><p className="text-sm text-muted-foreground">Records</p></div>
+        <div className="glass-card rounded-xl p-4"><p className="text-2xl font-bold">{templates.length}</p><p className="text-sm text-muted-foreground">Templates</p></div>
+        <div className="glass-card rounded-xl p-4"><p className="text-2xl font-bold">{pendingChecks}</p><p className="text-sm text-muted-foreground">Checks needing review</p></div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-        {/* Domain List */}
-        <div className="lg:col-span-1">
-          <div className="glass-card rounded-xl p-4">
-            <h3 className="text-sm font-medium text-foreground mb-3">Domains</h3>
-            <div className="space-y-2">
-              {domains.map((domain) => (
-                <button
-                  key={domain.id}
-                  onClick={() => setSelectedDomain(domain)}
-                  className={`w-full text-left p-3 rounded-lg transition-colors ${
-                    selectedDomain?.id === domain.id
-                      ? "bg-primary/10 border border-primary/30"
-                      : "hover:bg-muted"
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-foreground">{domain.name}</span>
-                    {getStatusBadge(domain.status)}
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {domain.records.length} records
-                  </p>
-                </button>
-              ))}
-            </div>
+      <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
+        <div className="xl:col-span-1 glass-card rounded-xl p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <h3 className="font-semibold">Zones</h3>
+            <Badge variant="outline">{clusters.length} clusters</Badge>
           </div>
+          {zones.map((zone) => (
+            <button
+              key={zone.id}
+              onClick={() => setSelectedZoneId(zone.id)}
+              className={`w-full rounded-lg border p-3 text-left transition-colors ${selectedZone?.id === zone.id ? "border-primary bg-primary/10" : "border-border hover:bg-muted/40"}`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <span className="font-medium">{zone.origin}</span>
+                {statusBadge(zone.status)}
+              </div>
+              <p className="text-xs text-muted-foreground mt-2">Serial {zone.serial} • {zone.dns_records.length} records • {zone.zone_type}</p>
+              <p className="text-xs text-muted-foreground mt-1">{zone.primary_nameserver} • {zone.dns_clusters?.name ?? "Unassigned cluster"}</p>
+            </button>
+          ))}
         </div>
 
-        {/* Records Table */}
-        <div className="lg:col-span-3">
-          {selectedDomain ? (
-            <div className="space-y-4">
-              {/* Domain Info */}
-              <div className="glass-card rounded-xl p-4">
-                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg font-semibold text-foreground">
-                      {selectedDomain.name}
-                    </h3>
-                    <p className="text-sm text-muted-foreground">
-                      Nameservers: {selectedDomain.nameservers.join(", ")}
-                    </p>
+        <div className="xl:col-span-3 space-y-4">
+          {selectedZone ? (
+            <>
+              <div className="glass-card rounded-xl p-4 flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
+                <div>
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-lg font-semibold">{selectedZone.origin}</h3>
+                    {statusBadge(selectedZone.status)}
+                    <Badge variant="outline">{selectedZone.zone_type}</Badge>
+                    {selectedZone.dnssec_enabled && <Badge variant="outline">DNSSEC</Badge>}
                   </div>
-                  <Button onClick={handleAddRecord}>
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Record
-                  </Button>
+                  <p className="text-sm text-muted-foreground mt-2">SOA {selectedZone.primary_nameserver} / {selectedZone.admin_email} • refresh {formatTtl(selectedZone.refresh_seconds)} • retry {formatTtl(selectedZone.retry_seconds)} • expire {formatTtl(selectedZone.expire_seconds)}</p>
+                  <p className="text-sm text-muted-foreground mt-1">Transfer ACL: {selectedZone.transfer_acl.length ? selectedZone.transfer_acl.join(", ") : "none configured"}</p>
+                </div>
+                <div className="flex gap-2 flex-wrap">
+                  <Button variant="outline" onClick={handleCreateZone} disabled={createZone.isPending}><Plus className="w-4 h-4 mr-2" />Ensure zone</Button>
+                  <Button onClick={() => openCreateRecord()}><Plus className="w-4 h-4 mr-2" />Add record</Button>
                 </div>
               </div>
 
-              {/* Search and Filter */}
-              <div className="flex flex-col sm:flex-row gap-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search records..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-10 bg-secondary border-border"
-                  />
-                </div>
-                <Button variant="outline">
-                  <RefreshCw className="w-4 h-4 mr-2" />
-                  Refresh
-                </Button>
-              </div>
+              <Tabs defaultValue="records" className="space-y-4">
+                <TabsList className="grid grid-cols-4 w-full">
+                  <TabsTrigger value="records">Records</TabsTrigger>
+                  <TabsTrigger value="templates">Templates</TabsTrigger>
+                  <TabsTrigger value="delegation">Delegation</TabsTrigger>
+                  <TabsTrigger value="propagation">Propagation</TabsTrigger>
+                </TabsList>
 
-              {/* Records Table */}
-              <div className="glass-card rounded-xl overflow-hidden">
-                <Table>
-                  <TableHeader>
-                    <TableRow className="border-border hover:bg-transparent">
-                      <TableHead className="text-muted-foreground">Type</TableHead>
-                      <TableHead className="text-muted-foreground">Name</TableHead>
-                      <TableHead className="text-muted-foreground">Value</TableHead>
-                      <TableHead className="text-muted-foreground">TTL</TableHead>
-                      <TableHead className="text-muted-foreground">Status</TableHead>
-                      <TableHead className="text-muted-foreground text-right">Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredRecords?.length === 0 ? (
-                      <TableRow>
-                        <TableCell colSpan={6} className="text-center py-12">
-                          <Globe className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-                          <p className="text-muted-foreground">
-                            {searchQuery ? "No records found" : "No DNS records yet"}
-                          </p>
-                          {!searchQuery && (
-                            <Button variant="link" onClick={handleAddRecord} className="mt-2">
-                              Add your first record
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredRecords?.map((record) => {
-                        const TypeIcon = recordTypeIcons[record.type] || Globe;
-                        return (
-                          <TableRow key={record.id} className="border-border">
-                            <TableCell>
-                              <Badge
-                                variant="outline"
-                                className={recordTypeColors[record.type]}
-                              >
-                                <TypeIcon className="w-3 h-3 mr-1" />
-                                {record.type}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <code className="bg-muted px-2 py-1 rounded text-sm">
-                                {record.name}
-                              </code>
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex items-center gap-2">
-                                {record.priority !== undefined && (
-                                  <Badge variant="secondary" className="text-xs">
-                                    {record.priority}
-                                  </Badge>
-                                )}
-                                <span className="text-muted-foreground text-sm truncate max-w-[200px]">
-                                  {record.value}
-                                </span>
-                              </div>
-                            </TableCell>
-                            <TableCell className="text-muted-foreground">
-                              {formatTTL(record.ttl)}
-                            </TableCell>
-                            <TableCell>{getStatusBadge(record.status)}</TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleEditRecord(record)}
-                                >
-                                  <Edit2 className="w-4 h-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="text-destructive hover:bg-destructive/10"
-                                  onClick={() => {
-                                    setRecordToDelete(record);
-                                    setDeleteDialogOpen(true);
-                                  }}
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </div>
-                            </TableCell>
+                <TabsContent value="records" className="space-y-4">
+                  <div className="flex flex-col md:flex-row gap-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                      <Input value={searchQuery} onChange={(event) => setSearchQuery(event.target.value)} className="pl-10 bg-secondary border-border" placeholder="Search records, names, or values..." />
+                    </div>
+                  </div>
+                  <div className="glass-card rounded-xl overflow-hidden">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Value</TableHead>
+                          <TableHead>TTL</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredRecords.length === 0 ? (
+                          <TableRow><TableCell colSpan={6} className="py-12 text-center text-muted-foreground">No records found for this zone.</TableCell></TableRow>
+                        ) : filteredRecords.map((record) => {
+                          const Icon = recordTypeIcons[record.type] ?? Globe;
+                          return (
+                            <TableRow key={record.id}>
+                              <TableCell><Badge variant="outline" className={recordTypeColors[record.type]}><Icon className="w-3 h-3 mr-1" />{record.type}</Badge></TableCell>
+                              <TableCell><code className="bg-muted px-2 py-1 rounded text-sm">{record.name}</code></TableCell>
+                              <TableCell>
+                                <div className="space-y-1">
+                                  <div className="text-sm break-all">{record.content}</div>
+                                  {(record.priority || record.port || record.is_glue) && <div className="flex gap-2 flex-wrap text-xs text-muted-foreground">
+                                    {record.priority ? <span>prio {record.priority}</span> : null}
+                                    {record.port ? <span>port {record.port}</span> : null}
+                                    {record.is_glue ? <span>glue</span> : null}
+                                  </div>}
+                                </div>
+                              </TableCell>
+                              <TableCell>{formatTtl(record.ttl)}</TableCell>
+                              <TableCell>{statusBadge(record.status)}</TableCell>
+                              <TableCell className="text-right">
+                                <div className="flex justify-end gap-2">
+                                  <Button variant="ghost" size="icon" onClick={() => openCreateRecord(record)}><Save className="w-4 h-4" /></Button>
+                                  <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10" onClick={() => handleDeleteRecord(record.id)}><Trash2 className="w-4 h-4" /></Button>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          );
+                        })}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="templates" className="space-y-4">
+                  <div className="glass-card rounded-xl p-4 space-y-4">
+                    <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4 items-end">
+                      <div className="space-y-2">
+                        <Label>Apply template</Label>
+                        <Select value={templateId} onValueChange={setTemplateId}>
+                          <SelectTrigger className="bg-secondary border-border"><SelectValue placeholder="Select a DNS template" /></SelectTrigger>
+                          <SelectContent className="bg-card border-border">
+                            {templates.map((template) => <SelectItem key={template.id} value={template.id}>{template.name} ({template.scope})</SelectItem>)}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <Button onClick={handleApplyTemplate} disabled={!templateId || applyTemplate.isPending}>Apply template</Button>
+                    </div>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {templates.map((template) => (
+                        <div key={template.id} className="rounded-lg border border-border p-4 space-y-2">
+                          <div className="flex items-center justify-between gap-2">
+                            <h4 className="font-medium">{template.name}</h4>
+                            <Badge variant="outline">{template.scope}</Badge>
+                          </div>
+                          <p className="text-sm text-muted-foreground">{template.description ?? "No description provided."}</p>
+                          <p className="text-xs text-muted-foreground">{template.records.length} record blueprint(s)</p>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="delegation" className="space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="glass-card rounded-xl p-4 space-y-4">
+                      <h4 className="font-semibold">Glue records</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        <Input placeholder="ns1.child-zone.example.com" value={glueForm.hostname} onChange={(e) => setGlueForm((v) => ({ ...v, hostname: e.target.value }))} className="bg-secondary border-border" />
+                        <Input placeholder="198.51.100.53" value={glueForm.ipv4} onChange={(e) => setGlueForm((v) => ({ ...v, ipv4: e.target.value }))} className="bg-secondary border-border" />
+                        <Input placeholder="2001:db8::53" value={glueForm.ipv6} onChange={(e) => setGlueForm((v) => ({ ...v, ipv6: e.target.value }))} className="bg-secondary border-border" />
+                        <Button onClick={handleSaveGlue} disabled={saveGlue.isPending}>Save glue</Button>
+                      </div>
+                      <div className="space-y-2">
+                        {selectedZone.dns_glue_records.map((glue) => (
+                          <div key={glue.id} className="rounded-lg border border-border p-3 text-sm">
+                            <div className="font-medium">{glue.hostname}</div>
+                            <div className="text-muted-foreground">{glue.ipv4 ?? "—"} / {glue.ipv6 ?? "—"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="glass-card rounded-xl p-4 space-y-4">
+                      <h4 className="font-semibold">Secondary DNS</h4>
+                      <div className="grid grid-cols-1 gap-3">
+                        <Input placeholder="ns2.amp-dns.com" value={secondaryForm.hostname} onChange={(e) => setSecondaryForm((v) => ({ ...v, hostname: e.target.value }))} className="bg-secondary border-border" />
+                        <Input placeholder="203.0.113.53" value={secondaryForm.ipv4} onChange={(e) => setSecondaryForm((v) => ({ ...v, ipv4: e.target.value }))} className="bg-secondary border-border" />
+                        <Input placeholder="2001:db8:2::53" value={secondaryForm.ipv6} onChange={(e) => setSecondaryForm((v) => ({ ...v, ipv6: e.target.value }))} className="bg-secondary border-border" />
+                        <Button onClick={handleSaveSecondary} disabled={saveSecondary.isPending}>Save secondary</Button>
+                      </div>
+                      <div className="space-y-2">
+                        {selectedZone.dns_secondary_nameservers.map((secondary) => (
+                          <div key={secondary.id} className="rounded-lg border border-border p-3 text-sm">
+                            <div className="flex items-center justify-between gap-2"><div className="font-medium">{secondary.hostname}</div>{secondary.transfer_enabled ? <Badge variant="outline">AXFR enabled</Badge> : null}</div>
+                            <div className="text-muted-foreground">{secondary.ipv4 ?? "—"} / {secondary.ipv6 ?? "—"}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="propagation" className="space-y-4">
+                  <div className="glass-card rounded-xl p-4 space-y-4">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-semibold">Resolver observations</h4>
+                        <p className="text-sm text-muted-foreground">Checks are populated by the DNS edge function and stored per zone for auditability.</p>
+                      </div>
+                      <Button variant="outline" onClick={handleRunPropagation} disabled={runPropagation.isPending}>Re-run checks</Button>
+                    </div>
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Resolver</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Expected</TableHead>
+                          <TableHead>Observed</TableHead>
+                          <TableHead>Latency</TableHead>
+                          <TableHead>Checked</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedZone.dns_propagation_checks.length === 0 ? (
+                          <TableRow><TableCell colSpan={6} className="text-center py-10 text-muted-foreground">No propagation checks have been recorded yet.</TableCell></TableRow>
+                        ) : selectedZone.dns_propagation_checks.map((check) => (
+                          <TableRow key={check.id}>
+                            <TableCell>{check.resolver}</TableCell>
+                            <TableCell>{statusBadge(check.status)}</TableCell>
+                            <TableCell className="max-w-[220px] truncate">{check.expected_value ?? "—"}</TableCell>
+                            <TableCell className="max-w-[220px] truncate">{check.observed_value ?? "—"}</TableCell>
+                            <TableCell>{check.latency_ms ? `${check.latency_ms}ms` : "—"}</TableCell>
+                            <TableCell>{new Date(check.checked_at).toLocaleString()}</TableCell>
                           </TableRow>
-                        );
-                      })
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            </div>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </>
           ) : (
-            <div className="glass-card rounded-xl p-12 text-center">
-              <Globe className="w-12 h-12 mx-auto text-muted-foreground/50 mb-3" />
-              <p className="text-muted-foreground">Select a domain to manage its DNS records</p>
-            </div>
+            <div className="glass-card rounded-xl p-10 text-center text-muted-foreground">No DNS zones available yet.</div>
           )}
         </div>
       </div>
 
-      {/* Add/Edit Record Dialog */}
       <Dialog open={recordDialogOpen} onOpenChange={setRecordDialogOpen}>
-        <DialogContent className="bg-card border-border">
+        <DialogContent className="bg-card border-border max-w-2xl">
           <DialogHeader>
-            <DialogTitle>{editingRecord ? "Edit DNS Record" : "Add DNS Record"}</DialogTitle>
-            <DialogDescription>
-              {editingRecord
-                ? "Update the DNS record settings"
-                : "Create a new DNS record for this domain"}
-            </DialogDescription>
+            <DialogTitle>{recordForm.id ? "Edit DNS record" : "Add DNS record"}</DialogTitle>
+            <DialogDescription>Validation is enforced by the `dns-control-plane` edge function before records are committed.</DialogDescription>
           </DialogHeader>
-
-          <div className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Record Type</Label>
-                <Select
-                  value={recordForm.type}
-                  onValueChange={(value) =>
-                    setRecordForm({ ...recordForm, type: value as DNSRecord["type"] })
-                  }
-                >
-                  <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="A">A (IPv4 Address)</SelectItem>
-                    <SelectItem value="AAAA">AAAA (IPv6 Address)</SelectItem>
-                    <SelectItem value="CNAME">CNAME (Alias)</SelectItem>
-                    <SelectItem value="MX">MX (Mail Exchange)</SelectItem>
-                    <SelectItem value="TXT">TXT (Text)</SelectItem>
-                    <SelectItem value="NS">NS (Nameserver)</SelectItem>
-                    <SelectItem value="SRV">SRV (Service)</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-2">
-                <Label>TTL</Label>
-                <Select
-                  value={recordForm.ttl.toString()}
-                  onValueChange={(value) =>
-                    setRecordForm({ ...recordForm, ttl: parseInt(value) })
-                  }
-                >
-                  <SelectTrigger className="bg-secondary border-border">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent className="bg-card border-border">
-                    <SelectItem value="300">5 minutes</SelectItem>
-                    <SelectItem value="900">15 minutes</SelectItem>
-                    <SelectItem value="1800">30 minutes</SelectItem>
-                    <SelectItem value="3600">1 hour</SelectItem>
-                    <SelectItem value="14400">4 hours</SelectItem>
-                    <SelectItem value="86400">1 day</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Type</Label>
+              <Select value={recordForm.type} onValueChange={(value) => setRecordForm((current) => ({ ...current, type: value as DnsRecordType }))}>
+                <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                <SelectContent className="bg-card border-border">
+                  {["A", "AAAA", "CNAME", "MX", "TXT", "NS", "SRV", "CAA", "PTR"].map((type) => <SelectItem key={type} value={type}>{type}</SelectItem>)}
+                </SelectContent>
+              </Select>
             </div>
-
+            <div className="space-y-2">
+              <Label>TTL</Label>
+              <Input type="number" value={recordForm.ttl} onChange={(event) => setRecordForm((current) => ({ ...current, ttl: Number(event.target.value) }))} className="bg-secondary border-border" />
+            </div>
             <div className="space-y-2">
               <Label>Name</Label>
-              <Input
-                placeholder="@ for root, or subdomain name"
-                value={recordForm.name}
-                onChange={(e) => setRecordForm({ ...recordForm, name: e.target.value })}
-                className="bg-secondary border-border"
-              />
-              <p className="text-xs text-muted-foreground">
-                Use @ for the root domain, or enter a subdomain (e.g., www, mail, api)
-              </p>
+              <Input value={recordForm.name} onChange={(event) => setRecordForm((current) => ({ ...current, name: event.target.value }))} className="bg-secondary border-border" placeholder="@ or api" />
             </div>
-
-            {recordForm.type === "MX" && (
-              <div className="space-y-2">
-                <Label>Priority</Label>
-                <Input
-                  type="number"
-                  placeholder="10"
-                  value={recordForm.priority}
-                  onChange={(e) =>
-                    setRecordForm({ ...recordForm, priority: parseInt(e.target.value) || 10 })
-                  }
-                  className="bg-secondary border-border"
-                />
-                <p className="text-xs text-muted-foreground">
-                  Lower priority values are preferred (e.g., 10, 20, 30)
-                </p>
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label>Value</Label>
-              <Input
-                placeholder={
-                  recordForm.type === "A"
-                    ? "192.168.1.1"
-                    : recordForm.type === "CNAME"
-                    ? "target.example.com"
-                    : recordForm.type === "MX"
-                    ? "mail.example.com"
-                    : recordForm.type === "TXT"
-                    ? "v=spf1 include:_spf.google.com ~all"
-                    : "Enter value"
-                }
-                value={recordForm.value}
-                onChange={(e) => setRecordForm({ ...recordForm, value: e.target.value })}
-                className="bg-secondary border-border"
-              />
+              {recordForm.type === "TXT" ? (
+                <Textarea value={recordForm.content} onChange={(event) => setRecordForm((current) => ({ ...current, content: event.target.value }))} className="bg-secondary border-border" placeholder={inferRecordPlaceholder(recordForm.type)} />
+              ) : (
+                <Input value={recordForm.content} onChange={(event) => setRecordForm((current) => ({ ...current, content: event.target.value }))} className="bg-secondary border-border" placeholder={inferRecordPlaceholder(recordForm.type)} />
+              )}
+            </div>
+            {(recordForm.type === "MX" || recordForm.type === "SRV") && (
+              <div className="space-y-2">
+                <Label>Priority</Label>
+                <Input type="number" value={recordForm.priority ?? 10} onChange={(event) => setRecordForm((current) => ({ ...current, priority: Number(event.target.value) }))} className="bg-secondary border-border" />
+              </div>
+            )}
+            {recordForm.type === "SRV" && (
+              <>
+                <div className="space-y-2">
+                  <Label>Weight</Label>
+                  <Input type="number" value={recordForm.weight ?? 10} onChange={(event) => setRecordForm((current) => ({ ...current, weight: Number(event.target.value) }))} className="bg-secondary border-border" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Port</Label>
+                  <Input type="number" value={recordForm.port ?? 443} onChange={(event) => setRecordForm((current) => ({ ...current, port: Number(event.target.value) }))} className="bg-secondary border-border" />
+                </div>
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Target</Label>
+                  <Input value={recordForm.target ?? ""} onChange={(event) => setRecordForm((current) => ({ ...current, target: event.target.value }))} className="bg-secondary border-border" placeholder="sip.example.com" />
+                </div>
+              </>
+            )}
+            <div className="flex items-center justify-between rounded-lg border border-border px-4 py-3 md:col-span-2">
+              <div>
+                <Label>Glue / in-bailiwick metadata</Label>
+                <p className="text-xs text-muted-foreground">Marks the record for delegation workflows and registrar glue planning.</p>
+              </div>
+              <Switch checked={Boolean(recordForm.is_glue)} onCheckedChange={(checked) => setRecordForm((current) => ({ ...current, is_glue: checked }))} />
             </div>
           </div>
-
           <DialogFooter>
-            <Button variant="outline" onClick={() => setRecordDialogOpen(false)}>
-              Cancel
-            </Button>
-            <Button onClick={handleSaveRecord}>
-              {editingRecord ? "Save Changes" : "Add Record"}
-            </Button>
+            <Button variant="outline" onClick={() => setRecordDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveRecord} disabled={saveRecord.isPending}>{recordForm.id ? "Save changes" : "Create record"}</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="bg-card border-border">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Delete DNS Record</AlertDialogTitle>
-            <AlertDialogDescription>
-              Are you sure you want to delete this {recordToDelete?.type} record for "
-              {recordToDelete?.name}"? This action cannot be undone.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="border-border">Cancel</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={handleDeleteRecord}
-              className="bg-destructive hover:bg-destructive/90"
-            >
-              Delete Record
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
     </div>
   );
 };
