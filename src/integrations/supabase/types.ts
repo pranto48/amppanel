@@ -1980,6 +1980,789 @@ export type Database = {
           },
         ]
       }
+      plugin_installation_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          installed_plugin_id: string
+          is_error: boolean | null
+          output: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          installed_plugin_id: string
+          is_error?: boolean | null
+          output?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          installed_plugin_id?: string
+          is_error?: boolean | null
+          output?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "plugin_installation_logs_installed_plugin_id_fkey"
+            columns: ["installed_plugin_id"]
+            isOneToOne: false
+            referencedRelation: "installed_plugins"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_malware_scans: {
+        Row: {
+          file_path: string
+          id: string
+          metadata: Json
+          scan_summary: string | null
+          scanned_at: string
+          signature_version: string | null
+          site_id: string
+          status: Database["public"]["Enums"]["malware_scan_status"]
+          threat_name: string | null
+        }
+        Insert: {
+          file_path: string
+          id?: string
+          metadata?: Json
+          scan_summary?: string | null
+          scanned_at?: string
+          signature_version?: string | null
+          site_id: string
+          status?: Database["public"]["Enums"]["malware_scan_status"]
+          threat_name?: string | null
+        }
+        Update: {
+          file_path?: string
+          id?: string
+          metadata?: Json
+          scan_summary?: string | null
+          scanned_at?: string
+          signature_version?: string | null
+          site_id?: string
+          status?: Database["public"]["Enums"]["malware_scan_status"]
+          threat_name?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_malware_scans_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_operation_runs: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          details: Json
+          id: string
+          operation: Database["public"]["Enums"]["file_operation_type"]
+          output: string | null
+          site_id: string
+          source_path: string | null
+          status: Database["public"]["Enums"]["file_operation_status"]
+          target_path: string | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          id?: string
+          operation: Database["public"]["Enums"]["file_operation_type"]
+          output?: string | null
+          site_id: string
+          source_path?: string | null
+          status?: Database["public"]["Enums"]["file_operation_status"]
+          target_path?: string | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          details?: Json
+          id?: string
+          operation?: Database["public"]["Enums"]["file_operation_type"]
+          output?: string | null
+          site_id?: string
+          source_path?: string | null
+          status?: Database["public"]["Enums"]["file_operation_status"]
+          target_path?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_operation_runs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      file_version_history: {
+        Row: {
+          change_type: string
+          content_hash: string | null
+          content_preview: string | null
+          created_at: string
+          created_by: string | null
+          diff_summary: string | null
+          file_path: string
+          id: string
+          site_id: string
+          version_number: number
+        }
+        Insert: {
+          change_type?: string
+          content_hash?: string | null
+          content_preview?: string | null
+          created_at?: string
+          created_by?: string | null
+          diff_summary?: string | null
+          file_path: string
+          id?: string
+          site_id: string
+          version_number: number
+        }
+        Update: {
+          change_type?: string
+          content_hash?: string | null
+          content_preview?: string | null
+          created_at?: string
+          created_by?: string | null
+          diff_summary?: string | null
+          file_path?: string
+          id?: string
+          site_id?: string
+          version_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "file_version_history_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monitoring_agents: {
+        Row: {
+          agent_version: string
+          capabilities: Json
+          created_at: string
+          hostname: string
+          id: string
+          last_seen_at: string | null
+          metadata: Json
+          site_id: string | null
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+        }
+        Insert: {
+          agent_version: string
+          capabilities?: Json
+          created_at?: string
+          hostname: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Update: {
+          agent_version?: string
+          capabilities?: Json
+          created_at?: string
+          hostname?: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_agents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monitoring_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at: string
+          detected_at: string
+          id: string
+          message: string
+          metadata: Json
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id: string | null
+          source_type: string
+          status: Database["public"]["Enums"]["monitoring_alert_status"]
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at?: string
+          detected_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          source_type: string
+          status?: Database["public"]["Enums"]["monitoring_alert_status"]
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at?: string
+          detected_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          source_type?: string
+          status?: Database["public"]["Enums"]["monitoring_alert_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_alerts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plugins: {
+        Row: {
+          apt_packages: string[] | null
+          author: string | null
+          category: Database["public"]["Enums"]["plugin_category"]
+          config_template: Json | null
+          created_at: string
+          dependencies: string[] | null
+          description: string | null
+          display_name: string
+          docker_image: string | null
+          icon: string | null
+          id: string
+          is_core: boolean
+          name: string
+          updated_at: string
+          version: string
+        }
+        Insert: {
+          apt_packages?: string[] | null
+          author?: string | null
+          category?: Database["public"]["Enums"]["plugin_category"]
+          config_template?: Json | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          display_name: string
+          docker_image?: string | null
+          icon?: string | null
+          id?: string
+          is_core?: boolean
+          name: string
+          updated_at?: string
+          version?: string
+        }
+        Update: {
+          apt_packages?: string[] | null
+          author?: string | null
+          category?: Database["public"]["Enums"]["plugin_category"]
+          config_template?: Json | null
+          created_at?: string
+          dependencies?: string[] | null
+          description?: string | null
+          display_name?: string
+          docker_image?: string | null
+          icon?: string | null
+          id?: string
+          is_core?: boolean
+          name?: string
+          updated_at?: string
+          version?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          email: string | null
+          full_name: string | null
+          id: string
+          is_active: boolean
+          password_changed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id: string
+          is_active?: boolean
+          password_changed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          is_active?: boolean
+          password_changed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_http_health_checks: {
+        Row: {
+          checked_at: string
+          created_at: string
+          expected_status: number
+          id: string
+          label: string
+          last_status_code: number | null
+          metadata: Json
+          response_time_ms: number | null
+          site_id: string
+          ssl_expires_at: string | null
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          expected_status?: number
+          id?: string
+          label: string
+          last_status_code?: number | null
+          metadata?: Json
+          response_time_ms?: number | null
+          site_id: string
+          ssl_expires_at?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          expected_status?: number
+          id?: string
+          label?: string
+          last_status_code?: number | null
+          metadata?: Json
+          response_time_ms?: number | null
+          site_id?: string
+          ssl_expires_at?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_http_health_checks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_incidents: {
+        Row: {
+          created_at: string
+          id: string
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["incident_status"]
+          summary: string | null
+          timeline: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          summary?: string | null
+          timeline?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          summary?: string | null
+          timeline?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_incidents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_members: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["site_role"]
+          site_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["site_role"]
+          site_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["site_role"]
+          site_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_members_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_root_suffix: string
+          env_defaults: Json
+          id: string
+          name: string
+          package_actions: Database["public"]["Enums"]["package_action_type"][]
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_root_suffix?: string
+          env_defaults?: Json
+          id?: string
+          name: string
+          package_actions?: Database["public"]["Enums"]["package_action_type"][]
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_root_suffix?: string
+          env_defaults?: Json
+          id?: string
+          name?: string
+          package_actions?: Database["public"]["Enums"]["package_action_type"][]
+          runtime?: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_app_installations: {
+        Row: {
+          app_name: string
+          branch: string
+          created_at: string
+          id: string
+          install_status: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at: string | null
+          production_sync_notes: string | null
+          repository_url: string | null
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection: Json
+          runtime_version: string | null
+          site_id: string
+          staging_site_id: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          app_name: string
+          branch?: string
+          created_at?: string
+          id?: string
+          install_status?: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at?: string | null
+          production_sync_notes?: string | null
+          repository_url?: string | null
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection?: Json
+          runtime_version?: string | null
+          site_id: string
+          staging_site_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          app_name?: string
+          branch?: string
+          created_at?: string
+          id?: string
+          install_status?: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at?: string | null
+          production_sync_notes?: string | null
+          repository_url?: string | null
+          runtime?: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection?: Json
+          runtime_version?: string | null
+          site_id?: string
+          staging_site_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_app_installations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: true
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_app_installations_staging_site_id_fkey"
+            columns: ["staging_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_app_installations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "app_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_deploy_hooks: {
+        Row: {
+          branch: string
+          created_at: string
+          deploy_script: string
+          hook_type: string
+          id: string
+          is_enabled: boolean
+          repository_url: string | null
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch?: string
+          created_at?: string
+          deploy_script: string
+          hook_type?: string
+          id?: string
+          is_enabled?: boolean
+          repository_url?: string | null
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          deploy_script?: string
+          hook_type?: string
+          id?: string
+          is_enabled?: boolean
+          repository_url?: string | null
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_deploy_hooks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_environment_variables: {
+        Row: {
+          created_at: string
+          id: string
+          is_secret: boolean
+          key: string
+          site_id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          key: string
+          site_id: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          key?: string
+          site_id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_environment_variables_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_package_action_runs: {
+        Row: {
+          action: Database["public"]["Enums"]["package_action_type"]
+          created_at: string
+          id: string
+          output: string | null
+          site_id: string
+          status: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["package_action_type"]
+          created_at?: string
+          id?: string
+          output?: string | null
+          site_id: string
+          status?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["package_action_type"]
+          created_at?: string
+          id?: string
+          output?: string | null
+          site_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_package_action_runs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_process_health: {
+        Row: {
+          checked_at: string
+          cpu_percent: number
+          created_at: string
+          id: string
+          memory_mb: number
+          metadata: Json
+          process_name: string
+          restart_count: number
+          site_id: string
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string
+          cpu_percent?: number
+          created_at?: string
+          id?: string
+          memory_mb?: number
+          metadata?: Json
+          process_name: string
+          restart_count?: number
+          site_id: string
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string
+          cpu_percent?: number
+          created_at?: string
+          id?: string
+          memory_mb?: number
+          metadata?: Json
+          process_name?: string
+          restart_count?: number
+          site_id?: string
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_process_health_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_service_configs: {
         Row: {
           access_log_path: string | null
@@ -2348,6 +3131,176 @@ export type Database = {
         }
         Relationships: []
       }
+      service_control_runs: {
+        Row: {
+          action: Database["public"]["Enums"]["service_control_action"]
+          config_test_passed: boolean | null
+          created_at: string
+          id: string
+          output: string | null
+          requested_by: string | null
+          service_id: string
+          status: Database["public"]["Enums"]["service_runtime_status"]
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["service_control_action"]
+          config_test_passed?: boolean | null
+          created_at?: string
+          id?: string
+          output?: string | null
+          requested_by?: string | null
+          service_id: string
+          status?: Database["public"]["Enums"]["service_runtime_status"]
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["service_control_action"]
+          config_test_passed?: boolean | null
+          created_at?: string
+          id?: string
+          output?: string | null
+          requested_by?: string | null
+          service_id?: string
+          status?: Database["public"]["Enums"]["service_runtime_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_control_runs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_journal_entries: {
+        Row: {
+          id: string
+          logged_at: string
+          message: string
+          service_id: string
+          severity: string
+          unit: string
+        }
+        Insert: {
+          id?: string
+          logged_at?: string
+          message: string
+          service_id: string
+          severity?: string
+          unit: string
+        }
+        Update: {
+          id?: string
+          logged_at?: string
+          message?: string
+          service_id?: string
+          severity?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_journal_entries_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_maintenance_actions: {
+        Row: {
+          action: Database["public"]["Enums"]["service_control_action"]
+          action_name: string
+          created_at: string
+          cron_expression: string
+          id: string
+          is_enabled: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          payload: Json
+          service_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action?: Database["public"]["Enums"]["service_control_action"]
+          action_name: string
+          created_at?: string
+          cron_expression: string
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          payload?: Json
+          service_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["service_control_action"]
+          action_name?: string
+          created_at?: string
+          cron_expression?: string
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          payload?: Json
+          service_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_maintenance_actions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_package_updates: {
+        Row: {
+          applied_at: string | null
+          available_at: string
+          current_version: string
+          id: string
+          package_name: string
+          service_id: string
+          status: string
+          summary: string | null
+          target_version: string
+        }
+        Insert: {
+          applied_at?: string | null
+          available_at?: string
+          current_version: string
+          id?: string
+          package_name: string
+          service_id: string
+          status?: string
+          summary?: string | null
+          target_version: string
+        }
+        Update: {
+          applied_at?: string | null
+          available_at?: string
+          current_version?: string
+          id?: string
+          package_name?: string
+          service_id?: string
+          status?: string
+          summary?: string | null
+          target_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_package_updates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_metrics: {
         Row: {
           cpu_percent: number
@@ -2403,6 +3356,62 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "system_metrics_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_services: {
+        Row: {
+          config_test_command: string | null
+          dependency_graph: Json
+          display_name: string
+          id: string
+          last_config_test_output: string | null
+          last_config_test_passed: boolean | null
+          memory_usage_mb: number
+          resource_limits: Json
+          service_name: string
+          site_id: string | null
+          status: Database["public"]["Enums"]["service_runtime_status"]
+          updated_at: string
+          version: string | null
+        }
+        Insert: {
+          config_test_command?: string | null
+          dependency_graph?: Json
+          display_name: string
+          id?: string
+          last_config_test_output?: string | null
+          last_config_test_passed?: boolean | null
+          memory_usage_mb?: number
+          resource_limits?: Json
+          service_name: string
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["service_runtime_status"]
+          updated_at?: string
+          version?: string | null
+        }
+        Update: {
+          config_test_command?: string | null
+          dependency_graph?: Json
+          display_name?: string
+          id?: string
+          last_config_test_output?: string | null
+          last_config_test_passed?: boolean | null
+          memory_usage_mb?: number
+          resource_limits?: Json
+          service_name?: string
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["service_runtime_status"]
+          updated_at?: string
+          version?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_services_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -2576,6 +3585,8 @@ export type Database = {
         | "uninstalling"
       runtime_environment: "production" | "staging" | "development"
       service_action_type: "provision" | "deploy" | "rollback" | "test"
+      service_control_action: "start" | "stop" | "restart" | "config_test" | "package_update" | "maintenance"
+      service_runtime_status: "running" | "stopped" | "restarting" | "failed"
       service_deployment_status:
         | "pending"
         | "validated"
@@ -2793,6 +3804,8 @@ export const Constants = {
       ],
       runtime_environment: ["production", "staging", "development"],
       service_action_type: ["provision", "deploy", "rollback", "test"],
+      service_control_action: ["start", "stop", "restart", "config_test", "package_update", "maintenance"],
+      service_runtime_status: ["running", "stopped", "restarting", "failed"],
       service_deployment_status: [
         "pending",
         "validated",
