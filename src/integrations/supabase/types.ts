@@ -639,6 +639,109 @@ export type Database = {
           },
         ]
       }
+      monitoring_agents: {
+        Row: {
+          agent_version: string
+          capabilities: Json
+          created_at: string
+          hostname: string
+          id: string
+          last_seen_at: string | null
+          metadata: Json
+          site_id: string | null
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+        }
+        Insert: {
+          agent_version: string
+          capabilities?: Json
+          created_at?: string
+          hostname: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Update: {
+          agent_version?: string
+          capabilities?: Json
+          created_at?: string
+          hostname?: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_agents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monitoring_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at: string
+          detected_at: string
+          id: string
+          message: string
+          metadata: Json
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id: string | null
+          source_type: string
+          status: Database["public"]["Enums"]["monitoring_alert_status"]
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at?: string
+          detected_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          source_type: string
+          status?: Database["public"]["Enums"]["monitoring_alert_status"]
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at?: string
+          detected_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          source_type?: string
+          status?: Database["public"]["Enums"]["monitoring_alert_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_alerts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plugins: {
         Row: {
           apt_packages: string[] | null
@@ -725,6 +828,112 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      site_http_health_checks: {
+        Row: {
+          checked_at: string
+          created_at: string
+          expected_status: number
+          id: string
+          label: string
+          last_status_code: number | null
+          metadata: Json
+          response_time_ms: number | null
+          site_id: string
+          ssl_expires_at: string | null
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          expected_status?: number
+          id?: string
+          label: string
+          last_status_code?: number | null
+          metadata?: Json
+          response_time_ms?: number | null
+          site_id: string
+          ssl_expires_at?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          expected_status?: number
+          id?: string
+          label?: string
+          last_status_code?: number | null
+          metadata?: Json
+          response_time_ms?: number | null
+          site_id?: string
+          ssl_expires_at?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_http_health_checks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_incidents: {
+        Row: {
+          created_at: string
+          id: string
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["incident_status"]
+          summary: string | null
+          timeline: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          summary?: string | null
+          timeline?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          summary?: string | null
+          timeline?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_incidents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       site_members: {
         Row: {
@@ -983,6 +1192,56 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "site_package_action_runs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_process_health: {
+        Row: {
+          checked_at: string
+          cpu_percent: number
+          created_at: string
+          id: string
+          memory_mb: number
+          metadata: Json
+          process_name: string
+          restart_count: number
+          site_id: string
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string
+          cpu_percent?: number
+          created_at?: string
+          id?: string
+          memory_mb?: number
+          metadata?: Json
+          process_name: string
+          restart_count?: number
+          site_id: string
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string
+          cpu_percent?: number
+          created_at?: string
+          id?: string
+          memory_mb?: number
+          metadata?: Json
+          process_name?: string
+          restart_count?: number
+          site_id?: string
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_process_health_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -1549,7 +1808,12 @@ export type Database = {
       cron_job_status: "success" | "failed" | "running"
       cron_job_type: "backup" | "cleanup" | "maintenance" | "custom"
       db_type: "mysql" | "postgresql" | "mariadb"
+      health_status: "healthy" | "warning" | "critical" | "unknown"
+      incident_status: "investigating" | "identified" | "monitoring" | "resolved"
       offsite_storage_provider: "s3" | "backblaze_b2" | "wasabi" | "gcs"
+      monitoring_alert_severity: "info" | "warning" | "critical"
+      monitoring_alert_status: "open" | "acknowledged" | "resolved"
+      monitoring_alert_type: "ssl_expiry" | "mail_queue" | "db_slow_query" | "http_health" | "process_health" | "anomaly" | "agent"
       restore_mode: "full" | "files_only" | "database_only" | "partial"
       restore_status: "previewing" | "ready" | "restoring" | "completed" | "failed" | "cancelled"
       package_action_type:
@@ -1755,7 +2019,12 @@ export const Constants = {
       cron_job_status: ["success", "failed", "running"],
       cron_job_type: ["backup", "cleanup", "maintenance", "custom"],
       db_type: ["mysql", "postgresql", "mariadb"],
+      health_status: ["healthy", "warning", "critical", "unknown"],
+      incident_status: ["investigating", "identified", "monitoring", "resolved"],
       offsite_storage_provider: ["s3", "backblaze_b2", "wasabi", "gcs"],
+      monitoring_alert_severity: ["info", "warning", "critical"],
+      monitoring_alert_status: ["open", "acknowledged", "resolved"],
+      monitoring_alert_type: ["ssl_expiry", "mail_queue", "db_slow_query", "http_health", "process_health", "anomaly", "agent"],
       restore_mode: ["full", "files_only", "database_only", "partial"],
       restore_status: ["previewing", "ready", "restoring", "completed", "failed", "cancelled"],
       package_action_type: [
