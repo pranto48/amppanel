@@ -644,6 +644,174 @@ export type Database = {
           },
         ]
       }
+      site_service_configs: {
+        Row: {
+          created_at: string
+          custom_runtime_config: Json
+          custom_vhost_config: string | null
+          env_vars: Json
+          generated_pool_config: string | null
+          generated_vhost_config: string | null
+          id: string
+          last_applied_at: string | null
+          last_deployment_status: Database["public"]["Enums"]["service_deployment_status"]
+          last_validation_output: string | null
+          listen_port: number | null
+          php_fpm_enabled: boolean
+          php_fpm_max_children: number
+          php_fpm_max_requests: number
+          php_fpm_max_spare_servers: number
+          php_fpm_min_spare_servers: number
+          php_fpm_pm: string
+          php_fpm_pool_name: string
+          php_fpm_start_servers: number
+          php_fpm_version: string | null
+          proxy_target: string | null
+          runtime_environment: Database["public"]["Enums"]["runtime_environment"]
+          site_id: string
+          template: Database["public"]["Enums"]["vhost_template_type"]
+          updated_at: string
+          web_server: Database["public"]["Enums"]["web_server_type"]
+        }
+        Insert: {
+          created_at?: string
+          custom_runtime_config?: Json
+          custom_vhost_config?: string | null
+          env_vars?: Json
+          generated_pool_config?: string | null
+          generated_vhost_config?: string | null
+          id?: string
+          last_applied_at?: string | null
+          last_deployment_status?: Database["public"]["Enums"]["service_deployment_status"]
+          last_validation_output?: string | null
+          listen_port?: number | null
+          php_fpm_enabled?: boolean
+          php_fpm_max_children?: number
+          php_fpm_max_requests?: number
+          php_fpm_max_spare_servers?: number
+          php_fpm_min_spare_servers?: number
+          php_fpm_pm?: string
+          php_fpm_pool_name: string
+          php_fpm_start_servers?: number
+          php_fpm_version?: string | null
+          proxy_target?: string | null
+          runtime_environment?: Database["public"]["Enums"]["runtime_environment"]
+          site_id: string
+          template?: Database["public"]["Enums"]["vhost_template_type"]
+          updated_at?: string
+          web_server?: Database["public"]["Enums"]["web_server_type"]
+        }
+        Update: {
+          created_at?: string
+          custom_runtime_config?: Json
+          custom_vhost_config?: string | null
+          env_vars?: Json
+          generated_pool_config?: string | null
+          generated_vhost_config?: string | null
+          id?: string
+          last_applied_at?: string | null
+          last_deployment_status?: Database["public"]["Enums"]["service_deployment_status"]
+          last_validation_output?: string | null
+          listen_port?: number | null
+          php_fpm_enabled?: boolean
+          php_fpm_max_children?: number
+          php_fpm_max_requests?: number
+          php_fpm_max_spare_servers?: number
+          php_fpm_min_spare_servers?: number
+          php_fpm_pm?: string
+          php_fpm_pool_name?: string
+          php_fpm_start_servers?: number
+          php_fpm_version?: string | null
+          proxy_target?: string | null
+          runtime_environment?: Database["public"]["Enums"]["runtime_environment"]
+          site_id?: string
+          template?: Database["public"]["Enums"]["vhost_template_type"]
+          updated_at?: string
+          web_server?: Database["public"]["Enums"]["web_server_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_service_configs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_service_deployments: {
+        Row: {
+          action: Database["public"]["Enums"]["service_action_type"]
+          applied_pool_config: string | null
+          applied_vhost_config: string | null
+          config_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          orchestration_log: string | null
+          rollback_source_deployment_id: string | null
+          site_id: string
+          snapshot_pool_config: string | null
+          snapshot_vhost_config: string | null
+          status: Database["public"]["Enums"]["service_deployment_status"]
+          validation_output: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["service_action_type"]
+          applied_pool_config?: string | null
+          applied_vhost_config?: string | null
+          config_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          orchestration_log?: string | null
+          rollback_source_deployment_id?: string | null
+          site_id: string
+          snapshot_pool_config?: string | null
+          snapshot_vhost_config?: string | null
+          status?: Database["public"]["Enums"]["service_deployment_status"]
+          validation_output?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["service_action_type"]
+          applied_pool_config?: string | null
+          applied_vhost_config?: string | null
+          config_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          orchestration_log?: string | null
+          rollback_source_deployment_id?: string | null
+          site_id?: string
+          snapshot_pool_config?: string | null
+          snapshot_vhost_config?: string | null
+          status?: Database["public"]["Enums"]["service_deployment_status"]
+          validation_output?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_service_deployments_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "site_service_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_service_deployments_rollback_source_deployment_id_fkey"
+            columns: ["rollback_source_deployment_id"]
+            isOneToOne: false
+            referencedRelation: "site_service_deployments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_service_deployments_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sites: {
         Row: {
           bandwidth_limit_gb: number
@@ -906,9 +1074,19 @@ export type Database = {
         | "installed"
         | "failed"
         | "uninstalling"
+      runtime_environment: "production" | "staging" | "development"
+      service_action_type: "provision" | "deploy" | "rollback"
+      service_deployment_status:
+        | "pending"
+        | "validated"
+        | "deployed"
+        | "failed"
+        | "rolled_back"
       site_role: "owner" | "admin" | "developer" | "viewer"
       site_status: "active" | "pending" | "suspended" | "error"
       site_type: "wordpress" | "nodejs" | "python" | "php" | "static" | "custom"
+      vhost_template_type: "php_fpm" | "reverse_proxy" | "static_site" | "custom"
+      web_server_type: "nginx" | "apache"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1083,9 +1261,20 @@ export const Constants = {
         "failed",
         "uninstalling",
       ],
+      runtime_environment: ["production", "staging", "development"],
+      service_action_type: ["provision", "deploy", "rollback"],
+      service_deployment_status: [
+        "pending",
+        "validated",
+        "deployed",
+        "failed",
+        "rolled_back",
+      ],
       site_role: ["owner", "admin", "developer", "viewer"],
       site_status: ["active", "pending", "suspended", "error"],
       site_type: ["wordpress", "nodejs", "python", "php", "static", "custom"],
+      vhost_template_type: ["php_fpm", "reverse_proxy", "static_site", "custom"],
+      web_server_type: ["nginx", "apache"],
     },
   },
 } as const
