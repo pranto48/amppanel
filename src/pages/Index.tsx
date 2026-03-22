@@ -28,6 +28,7 @@ import { EmailManagement } from "@/components/EmailManagement";
 import { PluginsPage } from "@/components/PluginsPage";
 import { CronJobsManagement } from "@/components/CronJobsManagement";
 import { ChangePasswordModal } from "@/components/ChangePasswordModal";
+import { GettingStartedPage } from "@/components/GettingStartedPage";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogActivity } from "@/hooks/useActivityLogs";
 import { useLatestMetrics, formatBytes } from "@/hooks/useSystemMetrics";
@@ -203,6 +204,8 @@ const Index = () => {
 
   const renderContent = () => {
     switch (activeItem) {
+      case "getting-started":
+        return <GettingStartedPage />;
       case "plugins":
         return <PluginsPage />;
       case "sites":

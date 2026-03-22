@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { 
   LayoutDashboard, 
+  Rocket,
   Globe, 
   Database, 
   FolderOpen, 
@@ -38,6 +39,7 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "getting-started", label: "Getting Started", icon: Rocket },
   { id: "plugins", label: "Plugins", icon: Store },
   { id: "sites", label: "Sites", icon: Globe },
   { id: "subdomains", label: "Subdomains", icon: Layers },
