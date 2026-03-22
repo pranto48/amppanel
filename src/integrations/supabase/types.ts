@@ -644,6 +644,238 @@ export type Database = {
           },
         ]
       }
+      app_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_root_suffix: string
+          env_defaults: Json
+          id: string
+          name: string
+          package_actions: Database["public"]["Enums"]["package_action_type"][]
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_root_suffix?: string
+          env_defaults?: Json
+          id?: string
+          name: string
+          package_actions?: Database["public"]["Enums"]["package_action_type"][]
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_root_suffix?: string
+          env_defaults?: Json
+          id?: string
+          name?: string
+          package_actions?: Database["public"]["Enums"]["package_action_type"][]
+          runtime?: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_app_installations: {
+        Row: {
+          app_name: string
+          branch: string
+          created_at: string
+          id: string
+          install_status: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at: string | null
+          production_sync_notes: string | null
+          repository_url: string | null
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection: Json
+          runtime_version: string | null
+          site_id: string
+          staging_site_id: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          app_name: string
+          branch?: string
+          created_at?: string
+          id?: string
+          install_status?: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at?: string | null
+          production_sync_notes?: string | null
+          repository_url?: string | null
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection?: Json
+          runtime_version?: string | null
+          site_id: string
+          staging_site_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          app_name?: string
+          branch?: string
+          created_at?: string
+          id?: string
+          install_status?: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at?: string | null
+          production_sync_notes?: string | null
+          repository_url?: string | null
+          runtime?: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection?: Json
+          runtime_version?: string | null
+          site_id?: string
+          staging_site_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_app_installations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: true
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_app_installations_staging_site_id_fkey"
+            columns: ["staging_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_app_installations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "app_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_deploy_hooks: {
+        Row: {
+          branch: string
+          created_at: string
+          deploy_script: string
+          hook_type: string
+          id: string
+          is_enabled: boolean
+          repository_url: string | null
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch?: string
+          created_at?: string
+          deploy_script: string
+          hook_type?: string
+          id?: string
+          is_enabled?: boolean
+          repository_url?: string | null
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          deploy_script?: string
+          hook_type?: string
+          id?: string
+          is_enabled?: boolean
+          repository_url?: string | null
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_deploy_hooks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_environment_variables: {
+        Row: {
+          created_at: string
+          id: string
+          is_secret: boolean
+          key: string
+          site_id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          key: string
+          site_id: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          key?: string
+          site_id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_environment_variables_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_package_action_runs: {
+        Row: {
+          action: Database["public"]["Enums"]["package_action_type"]
+          created_at: string
+          id: string
+          output: string | null
+          site_id: string
+          status: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["package_action_type"]
+          created_at?: string
+          id?: string
+          output?: string | null
+          site_id: string
+          status?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["package_action_type"]
+          created_at?: string
+          id?: string
+          output?: string | null
+          site_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_package_action_runs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_service_configs: {
         Row: {
           access_log_path: string | null
@@ -1193,13 +1425,22 @@ export type Database = {
         | "settings_updated"
         | "password_changed"
         | "security_alert"
+      app_install_status: "draft" | "installed" | "syncing" | "failed"
       app_role: "super_admin" | "admin" | "user"
+      app_template_runtime: "php" | "nodejs" | "python" | "wordpress" | "static"
       backup_frequency: "daily" | "weekly" | "monthly"
       backup_status: "pending" | "in_progress" | "completed" | "failed"
       backup_type: "full" | "files" | "database" | "scheduled"
       cron_job_status: "success" | "failed" | "running"
       cron_job_type: "backup" | "cleanup" | "maintenance" | "custom"
       db_type: "mysql" | "postgresql" | "mariadb"
+      package_action_type:
+        | "composer_install"
+        | "npm_install"
+        | "pip_install"
+        | "composer_update"
+        | "npm_build"
+        | "pip_freeze"
       plugin_category:
         | "web_server"
         | "email"
@@ -1386,13 +1627,23 @@ export const Constants = {
         "password_changed",
         "security_alert",
       ],
+      app_install_status: ["draft", "installed", "syncing", "failed"],
       app_role: ["super_admin", "admin", "user"],
+      app_template_runtime: ["php", "nodejs", "python", "wordpress", "static"],
       backup_frequency: ["daily", "weekly", "monthly"],
       backup_status: ["pending", "in_progress", "completed", "failed"],
       backup_type: ["full", "files", "database", "scheduled"],
       cron_job_status: ["success", "failed", "running"],
       cron_job_type: ["backup", "cleanup", "maintenance", "custom"],
       db_type: ["mysql", "postgresql", "mariadb"],
+      package_action_type: [
+        "composer_install",
+        "npm_install",
+        "pip_install",
+        "composer_update",
+        "npm_build",
+        "pip_freeze",
+      ],
       plugin_category: [
         "web_server",
         "email",
