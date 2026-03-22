@@ -114,46 +114,160 @@ export type Database = {
       backups: {
         Row: {
           backup_type: Database["public"]["Enums"]["backup_type"]
+          checksum_sha256: string | null
           completed_at: string | null
+          contains_database: boolean
+          contains_files: boolean
           created_at: string
           expires_at: string | null
           file_path: string | null
           id: string
+          metadata: Json
           name: string
           notes: string | null
+          point_in_time_reference: string | null
+          restore_preview: Json
           site_id: string
           size_mb: number
           status: Database["public"]["Enums"]["backup_status"]
+          storage_bucket: string | null
+          storage_path: string | null
+          storage_provider: Database["public"]["Enums"]["offsite_storage_provider"] | null
+          storage_region: string | null
+          verification_checked_at: string | null
+          verification_status: Database["public"]["Enums"]["backup_verification_status"]
         }
         Insert: {
           backup_type?: Database["public"]["Enums"]["backup_type"]
+          checksum_sha256?: string | null
           completed_at?: string | null
+          contains_database?: boolean
+          contains_files?: boolean
           created_at?: string
           expires_at?: string | null
           file_path?: string | null
           id?: string
+          metadata?: Json
           name: string
           notes?: string | null
+          point_in_time_reference?: string | null
+          restore_preview?: Json
           site_id: string
           size_mb?: number
           status?: Database["public"]["Enums"]["backup_status"]
+          storage_bucket?: string | null
+          storage_path?: string | null
+          storage_provider?: Database["public"]["Enums"]["offsite_storage_provider"] | null
+          storage_region?: string | null
+          verification_checked_at?: string | null
+          verification_status?: Database["public"]["Enums"]["backup_verification_status"]
         }
         Update: {
           backup_type?: Database["public"]["Enums"]["backup_type"]
+          checksum_sha256?: string | null
           completed_at?: string | null
+          contains_database?: boolean
+          contains_files?: boolean
           created_at?: string
           expires_at?: string | null
           file_path?: string | null
           id?: string
+          metadata?: Json
           name?: string
           notes?: string | null
+          point_in_time_reference?: string | null
+          restore_preview?: Json
           site_id?: string
           size_mb?: number
           status?: Database["public"]["Enums"]["backup_status"]
+          storage_bucket?: string | null
+          storage_path?: string | null
+          storage_provider?: Database["public"]["Enums"]["offsite_storage_provider"] | null
+          storage_region?: string | null
+          verification_checked_at?: string | null
+          verification_status?: Database["public"]["Enums"]["backup_verification_status"]
         }
         Relationships: [
           {
             foreignKeyName: "backups_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backup_restore_jobs: {
+        Row: {
+          backup_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          mode: Database["public"]["Enums"]["restore_mode"]
+          overwrite_confirmed: boolean
+          point_in_time_target: string | null
+          preview_manifest: Json
+          restore_database: boolean
+          restore_files: boolean
+          sandbox_preview_status: Database["public"]["Enums"]["restore_status"]
+          sandbox_preview_summary: string | null
+          site_id: string
+          status: Database["public"]["Enums"]["restore_status"]
+          status_log: string | null
+          target_database: string | null
+          target_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          backup_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["restore_mode"]
+          overwrite_confirmed?: boolean
+          point_in_time_target?: string | null
+          preview_manifest?: Json
+          restore_database?: boolean
+          restore_files?: boolean
+          sandbox_preview_status?: Database["public"]["Enums"]["restore_status"]
+          sandbox_preview_summary?: string | null
+          site_id: string
+          status?: Database["public"]["Enums"]["restore_status"]
+          status_log?: string | null
+          target_database?: string | null
+          target_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          backup_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["restore_mode"]
+          overwrite_confirmed?: boolean
+          point_in_time_target?: string | null
+          preview_manifest?: Json
+          restore_database?: boolean
+          restore_files?: boolean
+          sandbox_preview_status?: Database["public"]["Enums"]["restore_status"]
+          sandbox_preview_summary?: string | null
+          site_id?: string
+          status?: Database["public"]["Enums"]["restore_status"]
+          status_log?: string | null
+          target_database?: string | null
+          target_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_restore_jobs_backup_id_fkey"
+            columns: ["backup_id"]
+            isOneToOne: false
+            referencedRelation: "backups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backup_restore_jobs_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -525,6 +639,109 @@ export type Database = {
           },
         ]
       }
+      monitoring_agents: {
+        Row: {
+          agent_version: string
+          capabilities: Json
+          created_at: string
+          hostname: string
+          id: string
+          last_seen_at: string | null
+          metadata: Json
+          site_id: string | null
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+        }
+        Insert: {
+          agent_version: string
+          capabilities?: Json
+          created_at?: string
+          hostname: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Update: {
+          agent_version?: string
+          capabilities?: Json
+          created_at?: string
+          hostname?: string
+          id?: string
+          last_seen_at?: string | null
+          metadata?: Json
+          site_id?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_agents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      monitoring_alerts: {
+        Row: {
+          acknowledged_at: string | null
+          alert_type: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at: string
+          detected_at: string
+          id: string
+          message: string
+          metadata: Json
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id: string | null
+          source_type: string
+          status: Database["public"]["Enums"]["monitoring_alert_status"]
+          title: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          alert_type: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at?: string
+          detected_at?: string
+          id?: string
+          message: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          source_type: string
+          status?: Database["public"]["Enums"]["monitoring_alert_status"]
+          title: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          alert_type?: Database["public"]["Enums"]["monitoring_alert_type"]
+          created_at?: string
+          detected_at?: string
+          id?: string
+          message?: string
+          metadata?: Json
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          source_type?: string
+          status?: Database["public"]["Enums"]["monitoring_alert_status"]
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "monitoring_alerts_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       plugins: {
         Row: {
           apt_packages: string[] | null
@@ -612,6 +829,112 @@ export type Database = {
         }
         Relationships: []
       }
+      site_http_health_checks: {
+        Row: {
+          checked_at: string
+          created_at: string
+          expected_status: number
+          id: string
+          label: string
+          last_status_code: number | null
+          metadata: Json
+          response_time_ms: number | null
+          site_id: string
+          ssl_expires_at: string | null
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+          url: string
+        }
+        Insert: {
+          checked_at?: string
+          created_at?: string
+          expected_status?: number
+          id?: string
+          label: string
+          last_status_code?: number | null
+          metadata?: Json
+          response_time_ms?: number | null
+          site_id: string
+          ssl_expires_at?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+          url: string
+        }
+        Update: {
+          checked_at?: string
+          created_at?: string
+          expected_status?: number
+          id?: string
+          label?: string
+          last_status_code?: number | null
+          metadata?: Json
+          response_time_ms?: number | null
+          site_id?: string
+          ssl_expires_at?: string | null
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+          url?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_http_health_checks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_incidents: {
+        Row: {
+          created_at: string
+          id: string
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id: string | null
+          started_at: string
+          status: Database["public"]["Enums"]["incident_status"]
+          summary: string | null
+          timeline: Json
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          summary?: string | null
+          timeline?: Json
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["monitoring_alert_severity"]
+          site_id?: string | null
+          started_at?: string
+          status?: Database["public"]["Enums"]["incident_status"]
+          summary?: string | null
+          timeline?: Json
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_incidents_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_members: {
         Row: {
           created_at: string
@@ -637,6 +960,599 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "site_members_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      app_templates: {
+        Row: {
+          created_at: string
+          description: string | null
+          document_root_suffix: string
+          env_defaults: Json
+          id: string
+          name: string
+          package_actions: Database["public"]["Enums"]["package_action_type"][]
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          document_root_suffix?: string
+          env_defaults?: Json
+          id?: string
+          name: string
+          package_actions?: Database["public"]["Enums"]["package_action_type"][]
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          document_root_suffix?: string
+          env_defaults?: Json
+          id?: string
+          name?: string
+          package_actions?: Database["public"]["Enums"]["package_action_type"][]
+          runtime?: Database["public"]["Enums"]["app_template_runtime"]
+          startup_command?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      site_app_installations: {
+        Row: {
+          app_name: string
+          branch: string
+          created_at: string
+          id: string
+          install_status: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at: string | null
+          production_sync_notes: string | null
+          repository_url: string | null
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection: Json
+          runtime_version: string | null
+          site_id: string
+          staging_site_id: string | null
+          template_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          app_name: string
+          branch?: string
+          created_at?: string
+          id?: string
+          install_status?: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at?: string | null
+          production_sync_notes?: string | null
+          repository_url?: string | null
+          runtime: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection?: Json
+          runtime_version?: string | null
+          site_id: string
+          staging_site_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          app_name?: string
+          branch?: string
+          created_at?: string
+          id?: string
+          install_status?: Database["public"]["Enums"]["app_install_status"]
+          last_deployed_at?: string | null
+          production_sync_notes?: string | null
+          repository_url?: string | null
+          runtime?: Database["public"]["Enums"]["app_template_runtime"]
+          runtime_detection?: Json
+          runtime_version?: string | null
+          site_id?: string
+          staging_site_id?: string | null
+          template_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_app_installations_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: true
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_app_installations_staging_site_id_fkey"
+            columns: ["staging_site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_app_installations_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "app_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_deploy_hooks: {
+        Row: {
+          branch: string
+          created_at: string
+          deploy_script: string
+          hook_type: string
+          id: string
+          is_enabled: boolean
+          repository_url: string | null
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          branch?: string
+          created_at?: string
+          deploy_script: string
+          hook_type?: string
+          id?: string
+          is_enabled?: boolean
+          repository_url?: string | null
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          branch?: string
+          created_at?: string
+          deploy_script?: string
+          hook_type?: string
+          id?: string
+          is_enabled?: boolean
+          repository_url?: string | null
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_deploy_hooks_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_environment_variables: {
+        Row: {
+          created_at: string
+          id: string
+          is_secret: boolean
+          key: string
+          site_id: string
+          updated_at: string
+          value: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          key: string
+          site_id: string
+          updated_at?: string
+          value: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_secret?: boolean
+          key?: string
+          site_id?: string
+          updated_at?: string
+          value?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_environment_variables_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_package_action_runs: {
+        Row: {
+          action: Database["public"]["Enums"]["package_action_type"]
+          created_at: string
+          id: string
+          output: string | null
+          site_id: string
+          status: string
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["package_action_type"]
+          created_at?: string
+          id?: string
+          output?: string | null
+          site_id: string
+          status?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["package_action_type"]
+          created_at?: string
+          id?: string
+          output?: string | null
+          site_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_package_action_runs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_process_health: {
+        Row: {
+          checked_at: string
+          cpu_percent: number
+          created_at: string
+          id: string
+          memory_mb: number
+          metadata: Json
+          process_name: string
+          restart_count: number
+          site_id: string
+          status: Database["public"]["Enums"]["health_status"]
+          updated_at: string
+        }
+        Insert: {
+          checked_at?: string
+          cpu_percent?: number
+          created_at?: string
+          id?: string
+          memory_mb?: number
+          metadata?: Json
+          process_name: string
+          restart_count?: number
+          site_id: string
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Update: {
+          checked_at?: string
+          cpu_percent?: number
+          created_at?: string
+          id?: string
+          memory_mb?: number
+          metadata?: Json
+          process_name?: string
+          restart_count?: number
+          site_id?: string
+          status?: Database["public"]["Enums"]["health_status"]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_process_health_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_service_configs: {
+        Row: {
+          access_log_path: string | null
+          created_at: string
+          custom_runtime_config: Json
+          custom_vhost_config: string | null
+          error_log_path: string | null
+          env_vars: Json
+          generated_pool_config: string | null
+          generated_vhost_config: string | null
+          id: string
+          last_applied_at: string | null
+          last_deployment_status: Database["public"]["Enums"]["service_deployment_status"]
+          last_test_output: string | null
+          last_test_passed: boolean | null
+          last_tested_at: string | null
+          last_validation_output: string | null
+          listen_port: number | null
+          php_ini_overrides: Json
+          php_fpm_enabled: boolean
+          php_fpm_max_children: number
+          php_fpm_max_requests: number
+          php_fpm_max_spare_servers: number
+          php_fpm_min_spare_servers: number
+          php_fpm_pm: string
+          php_fpm_pool_name: string
+          php_fpm_start_servers: number
+          php_fpm_version: string | null
+          proxy_target: string | null
+          runtime_environment: Database["public"]["Enums"]["runtime_environment"]
+          site_id: string
+          template: Database["public"]["Enums"]["vhost_template_type"]
+          updated_at: string
+          web_server: Database["public"]["Enums"]["web_server_type"]
+        }
+        Insert: {
+          access_log_path?: string | null
+          created_at?: string
+          custom_runtime_config?: Json
+          custom_vhost_config?: string | null
+          error_log_path?: string | null
+          env_vars?: Json
+          generated_pool_config?: string | null
+          generated_vhost_config?: string | null
+          id?: string
+          last_applied_at?: string | null
+          last_deployment_status?: Database["public"]["Enums"]["service_deployment_status"]
+          last_test_output?: string | null
+          last_test_passed?: boolean | null
+          last_tested_at?: string | null
+          last_validation_output?: string | null
+          listen_port?: number | null
+          php_ini_overrides?: Json
+          php_fpm_enabled?: boolean
+          php_fpm_max_children?: number
+          php_fpm_max_requests?: number
+          php_fpm_max_spare_servers?: number
+          php_fpm_min_spare_servers?: number
+          php_fpm_pm?: string
+          php_fpm_pool_name: string
+          php_fpm_start_servers?: number
+          php_fpm_version?: string | null
+          proxy_target?: string | null
+          runtime_environment?: Database["public"]["Enums"]["runtime_environment"]
+          site_id: string
+          template?: Database["public"]["Enums"]["vhost_template_type"]
+          updated_at?: string
+          web_server?: Database["public"]["Enums"]["web_server_type"]
+        }
+        Update: {
+          access_log_path?: string | null
+          created_at?: string
+          custom_runtime_config?: Json
+          custom_vhost_config?: string | null
+          error_log_path?: string | null
+          env_vars?: Json
+          generated_pool_config?: string | null
+          generated_vhost_config?: string | null
+          id?: string
+          last_applied_at?: string | null
+          last_deployment_status?: Database["public"]["Enums"]["service_deployment_status"]
+          last_test_output?: string | null
+          last_test_passed?: boolean | null
+          last_tested_at?: string | null
+          last_validation_output?: string | null
+          listen_port?: number | null
+          php_ini_overrides?: Json
+          php_fpm_enabled?: boolean
+          php_fpm_max_children?: number
+          php_fpm_max_requests?: number
+          php_fpm_max_spare_servers?: number
+          php_fpm_min_spare_servers?: number
+          php_fpm_pm?: string
+          php_fpm_pool_name?: string
+          php_fpm_start_servers?: number
+          php_fpm_version?: string | null
+          proxy_target?: string | null
+          runtime_environment?: Database["public"]["Enums"]["runtime_environment"]
+          site_id?: string
+          template?: Database["public"]["Enums"]["vhost_template_type"]
+          updated_at?: string
+          web_server?: Database["public"]["Enums"]["web_server_type"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_service_configs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_service_logs: {
+        Row: {
+          config_id: string | null
+          created_at: string
+          id: string
+          log_type: string
+          message: string
+          site_id: string
+        }
+        Insert: {
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          log_type: string
+          message: string
+          site_id: string
+        }
+        Update: {
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          log_type?: string
+          message?: string
+          site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_service_logs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "site_service_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_service_logs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_ssl_certificates: {
+        Row: {
+          alert_before_days: number
+          alternate_names: string[]
+          auto_redirect_http: boolean
+          certificate_chain_diagnostics: string | null
+          certificate_chain_issuer: string | null
+          certificate_chain_valid: boolean | null
+          certificate_status: Database["public"]["Enums"]["ssl_certificate_status"]
+          challenge_type: Database["public"]["Enums"]["ssl_challenge_type"]
+          created_at: string
+          dns_provider: string | null
+          expires_at: string | null
+          id: string
+          is_wildcard: boolean
+          issued_at: string | null
+          last_alert_sent_at: string | null
+          last_error: string | null
+          primary_domain: string
+          provider: string
+          renewed_at: string | null
+          revoked_at: string | null
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          alert_before_days?: number
+          alternate_names?: string[]
+          auto_redirect_http?: boolean
+          certificate_chain_diagnostics?: string | null
+          certificate_chain_issuer?: string | null
+          certificate_chain_valid?: boolean | null
+          certificate_status?: Database["public"]["Enums"]["ssl_certificate_status"]
+          challenge_type?: Database["public"]["Enums"]["ssl_challenge_type"]
+          created_at?: string
+          dns_provider?: string | null
+          expires_at?: string | null
+          id?: string
+          is_wildcard?: boolean
+          issued_at?: string | null
+          last_alert_sent_at?: string | null
+          last_error?: string | null
+          primary_domain: string
+          provider?: string
+          renewed_at?: string | null
+          revoked_at?: string | null
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          alert_before_days?: number
+          alternate_names?: string[]
+          auto_redirect_http?: boolean
+          certificate_chain_diagnostics?: string | null
+          certificate_chain_issuer?: string | null
+          certificate_chain_valid?: boolean | null
+          certificate_status?: Database["public"]["Enums"]["ssl_certificate_status"]
+          challenge_type?: Database["public"]["Enums"]["ssl_challenge_type"]
+          created_at?: string
+          dns_provider?: string | null
+          expires_at?: string | null
+          id?: string
+          is_wildcard?: boolean
+          issued_at?: string | null
+          last_alert_sent_at?: string | null
+          last_error?: string | null
+          primary_domain?: string
+          provider?: string
+          renewed_at?: string | null
+          revoked_at?: string | null
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_ssl_certificates_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_service_deployments: {
+        Row: {
+          action: Database["public"]["Enums"]["service_action_type"]
+          applied_pool_config: string | null
+          applied_vhost_config: string | null
+          config_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          orchestration_log: string | null
+          rollback_source_deployment_id: string | null
+          site_id: string
+          snapshot_pool_config: string | null
+          snapshot_vhost_config: string | null
+          status: Database["public"]["Enums"]["service_deployment_status"]
+          validation_output: string | null
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["service_action_type"]
+          applied_pool_config?: string | null
+          applied_vhost_config?: string | null
+          config_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          orchestration_log?: string | null
+          rollback_source_deployment_id?: string | null
+          site_id: string
+          snapshot_pool_config?: string | null
+          snapshot_vhost_config?: string | null
+          status?: Database["public"]["Enums"]["service_deployment_status"]
+          validation_output?: string | null
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["service_action_type"]
+          applied_pool_config?: string | null
+          applied_vhost_config?: string | null
+          config_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          orchestration_log?: string | null
+          rollback_source_deployment_id?: string | null
+          site_id?: string
+          snapshot_pool_config?: string | null
+          snapshot_vhost_config?: string | null
+          status?: Database["public"]["Enums"]["service_deployment_status"]
+          validation_output?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_service_deployments_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "site_service_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_service_deployments_rollback_source_deployment_id_fkey"
+            columns: ["rollback_source_deployment_id"]
+            isOneToOne: false
+            referencedRelation: "site_service_deployments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_service_deployments_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -882,13 +1798,31 @@ export type Database = {
         | "settings_updated"
         | "password_changed"
         | "security_alert"
+      app_install_status: "draft" | "installed" | "syncing" | "failed"
       app_role: "super_admin" | "admin" | "user"
+      app_template_runtime: "php" | "nodejs" | "python" | "wordpress" | "static"
       backup_frequency: "daily" | "weekly" | "monthly"
+      backup_verification_status: "pending" | "verified" | "warning" | "failed"
       backup_status: "pending" | "in_progress" | "completed" | "failed"
       backup_type: "full" | "files" | "database" | "scheduled"
       cron_job_status: "success" | "failed" | "running"
       cron_job_type: "backup" | "cleanup" | "maintenance" | "custom"
       db_type: "mysql" | "postgresql" | "mariadb"
+      health_status: "healthy" | "warning" | "critical" | "unknown"
+      incident_status: "investigating" | "identified" | "monitoring" | "resolved"
+      offsite_storage_provider: "s3" | "backblaze_b2" | "wasabi" | "gcs"
+      monitoring_alert_severity: "info" | "warning" | "critical"
+      monitoring_alert_status: "open" | "acknowledged" | "resolved"
+      monitoring_alert_type: "ssl_expiry" | "mail_queue" | "db_slow_query" | "http_health" | "process_health" | "anomaly" | "agent"
+      restore_mode: "full" | "files_only" | "database_only" | "partial"
+      restore_status: "previewing" | "ready" | "restoring" | "completed" | "failed" | "cancelled"
+      package_action_type:
+        | "composer_install"
+        | "npm_install"
+        | "pip_install"
+        | "composer_update"
+        | "npm_build"
+        | "pip_freeze"
       plugin_category:
         | "web_server"
         | "email"
@@ -906,9 +1840,27 @@ export type Database = {
         | "installed"
         | "failed"
         | "uninstalling"
+      runtime_environment: "production" | "staging" | "development"
+      service_action_type: "provision" | "deploy" | "rollback" | "test"
+      service_deployment_status:
+        | "pending"
+        | "validated"
+        | "deployed"
+        | "failed"
+        | "rolled_back"
+      ssl_certificate_status:
+        | "pending"
+        | "issued"
+        | "renewing"
+        | "revoked"
+        | "failed"
+        | "expiring"
+      ssl_challenge_type: "http_01" | "dns_01"
       site_role: "owner" | "admin" | "developer" | "viewer"
       site_status: "active" | "pending" | "suspended" | "error"
       site_type: "wordpress" | "nodejs" | "python" | "php" | "static" | "custom"
+      vhost_template_type: "php_fpm" | "reverse_proxy" | "static_site" | "custom"
+      web_server_type: "nginx" | "apache"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1057,13 +2009,32 @@ export const Constants = {
         "password_changed",
         "security_alert",
       ],
+      app_install_status: ["draft", "installed", "syncing", "failed"],
       app_role: ["super_admin", "admin", "user"],
+      app_template_runtime: ["php", "nodejs", "python", "wordpress", "static"],
       backup_frequency: ["daily", "weekly", "monthly"],
+      backup_verification_status: ["pending", "verified", "warning", "failed"],
       backup_status: ["pending", "in_progress", "completed", "failed"],
       backup_type: ["full", "files", "database", "scheduled"],
       cron_job_status: ["success", "failed", "running"],
       cron_job_type: ["backup", "cleanup", "maintenance", "custom"],
       db_type: ["mysql", "postgresql", "mariadb"],
+      health_status: ["healthy", "warning", "critical", "unknown"],
+      incident_status: ["investigating", "identified", "monitoring", "resolved"],
+      offsite_storage_provider: ["s3", "backblaze_b2", "wasabi", "gcs"],
+      monitoring_alert_severity: ["info", "warning", "critical"],
+      monitoring_alert_status: ["open", "acknowledged", "resolved"],
+      monitoring_alert_type: ["ssl_expiry", "mail_queue", "db_slow_query", "http_health", "process_health", "anomaly", "agent"],
+      restore_mode: ["full", "files_only", "database_only", "partial"],
+      restore_status: ["previewing", "ready", "restoring", "completed", "failed", "cancelled"],
+      package_action_type: [
+        "composer_install",
+        "npm_install",
+        "pip_install",
+        "composer_update",
+        "npm_build",
+        "pip_freeze",
+      ],
       plugin_category: [
         "web_server",
         "email",
@@ -1083,9 +2054,29 @@ export const Constants = {
         "failed",
         "uninstalling",
       ],
+      runtime_environment: ["production", "staging", "development"],
+      service_action_type: ["provision", "deploy", "rollback", "test"],
+      service_deployment_status: [
+        "pending",
+        "validated",
+        "deployed",
+        "failed",
+        "rolled_back",
+      ],
+      ssl_certificate_status: [
+        "pending",
+        "issued",
+        "renewing",
+        "revoked",
+        "failed",
+        "expiring",
+      ],
+      ssl_challenge_type: ["http_01", "dns_01"],
       site_role: ["owner", "admin", "developer", "viewer"],
       site_status: ["active", "pending", "suspended", "error"],
       site_type: ["wordpress", "nodejs", "python", "php", "static", "custom"],
+      vhost_template_type: ["php_fpm", "reverse_proxy", "static_site", "custom"],
+      web_server_type: ["nginx", "apache"],
     },
   },
 } as const
