@@ -29,6 +29,7 @@ import { PluginsPage } from "@/components/PluginsPage";
 import { CronJobsManagement } from "@/components/CronJobsManagement";
 import { ChangePasswordModal } from "@/components/ChangePasswordModal";
 import { GettingStartedPage } from "@/components/GettingStartedPage";
+import { HostingManagement } from "@/components/HostingManagement";
 import { useAuth } from "@/hooks/useAuth";
 import { useLogActivity } from "@/hooks/useActivityLogs";
 import { useLatestMetrics, formatBytes } from "@/hooks/useSystemMetrics";
@@ -210,6 +211,8 @@ const Index = () => {
         return <PluginsPage />;
       case "sites":
         return <SitesManagement />;
+      case "hosting":
+        return <HostingManagement />;
       case "subdomains":
         return <SubdomainManager />;
       case "databases":
