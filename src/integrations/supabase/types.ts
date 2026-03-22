@@ -114,46 +114,160 @@ export type Database = {
       backups: {
         Row: {
           backup_type: Database["public"]["Enums"]["backup_type"]
+          checksum_sha256: string | null
           completed_at: string | null
+          contains_database: boolean
+          contains_files: boolean
           created_at: string
           expires_at: string | null
           file_path: string | null
           id: string
+          metadata: Json
           name: string
           notes: string | null
+          point_in_time_reference: string | null
+          restore_preview: Json
           site_id: string
           size_mb: number
           status: Database["public"]["Enums"]["backup_status"]
+          storage_bucket: string | null
+          storage_path: string | null
+          storage_provider: Database["public"]["Enums"]["offsite_storage_provider"] | null
+          storage_region: string | null
+          verification_checked_at: string | null
+          verification_status: Database["public"]["Enums"]["backup_verification_status"]
         }
         Insert: {
           backup_type?: Database["public"]["Enums"]["backup_type"]
+          checksum_sha256?: string | null
           completed_at?: string | null
+          contains_database?: boolean
+          contains_files?: boolean
           created_at?: string
           expires_at?: string | null
           file_path?: string | null
           id?: string
+          metadata?: Json
           name: string
           notes?: string | null
+          point_in_time_reference?: string | null
+          restore_preview?: Json
           site_id: string
           size_mb?: number
           status?: Database["public"]["Enums"]["backup_status"]
+          storage_bucket?: string | null
+          storage_path?: string | null
+          storage_provider?: Database["public"]["Enums"]["offsite_storage_provider"] | null
+          storage_region?: string | null
+          verification_checked_at?: string | null
+          verification_status?: Database["public"]["Enums"]["backup_verification_status"]
         }
         Update: {
           backup_type?: Database["public"]["Enums"]["backup_type"]
+          checksum_sha256?: string | null
           completed_at?: string | null
+          contains_database?: boolean
+          contains_files?: boolean
           created_at?: string
           expires_at?: string | null
           file_path?: string | null
           id?: string
+          metadata?: Json
           name?: string
           notes?: string | null
+          point_in_time_reference?: string | null
+          restore_preview?: Json
           site_id?: string
           size_mb?: number
           status?: Database["public"]["Enums"]["backup_status"]
+          storage_bucket?: string | null
+          storage_path?: string | null
+          storage_provider?: Database["public"]["Enums"]["offsite_storage_provider"] | null
+          storage_region?: string | null
+          verification_checked_at?: string | null
+          verification_status?: Database["public"]["Enums"]["backup_verification_status"]
         }
         Relationships: [
           {
             foreignKeyName: "backups_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      backup_restore_jobs: {
+        Row: {
+          backup_id: string
+          created_at: string
+          created_by: string | null
+          id: string
+          mode: Database["public"]["Enums"]["restore_mode"]
+          overwrite_confirmed: boolean
+          point_in_time_target: string | null
+          preview_manifest: Json
+          restore_database: boolean
+          restore_files: boolean
+          sandbox_preview_status: Database["public"]["Enums"]["restore_status"]
+          sandbox_preview_summary: string | null
+          site_id: string
+          status: Database["public"]["Enums"]["restore_status"]
+          status_log: string | null
+          target_database: string | null
+          target_path: string | null
+          updated_at: string
+        }
+        Insert: {
+          backup_id: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["restore_mode"]
+          overwrite_confirmed?: boolean
+          point_in_time_target?: string | null
+          preview_manifest?: Json
+          restore_database?: boolean
+          restore_files?: boolean
+          sandbox_preview_status?: Database["public"]["Enums"]["restore_status"]
+          sandbox_preview_summary?: string | null
+          site_id: string
+          status?: Database["public"]["Enums"]["restore_status"]
+          status_log?: string | null
+          target_database?: string | null
+          target_path?: string | null
+          updated_at?: string
+        }
+        Update: {
+          backup_id?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          mode?: Database["public"]["Enums"]["restore_mode"]
+          overwrite_confirmed?: boolean
+          point_in_time_target?: string | null
+          preview_manifest?: Json
+          restore_database?: boolean
+          restore_files?: boolean
+          sandbox_preview_status?: Database["public"]["Enums"]["restore_status"]
+          sandbox_preview_summary?: string | null
+          site_id?: string
+          status?: Database["public"]["Enums"]["restore_status"]
+          status_log?: string | null
+          target_database?: string | null
+          target_path?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "backup_restore_jobs_backup_id_fkey"
+            columns: ["backup_id"]
+            isOneToOne: false
+            referencedRelation: "backups"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "backup_restore_jobs_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -1429,11 +1543,15 @@ export type Database = {
       app_role: "super_admin" | "admin" | "user"
       app_template_runtime: "php" | "nodejs" | "python" | "wordpress" | "static"
       backup_frequency: "daily" | "weekly" | "monthly"
+      backup_verification_status: "pending" | "verified" | "warning" | "failed"
       backup_status: "pending" | "in_progress" | "completed" | "failed"
       backup_type: "full" | "files" | "database" | "scheduled"
       cron_job_status: "success" | "failed" | "running"
       cron_job_type: "backup" | "cleanup" | "maintenance" | "custom"
       db_type: "mysql" | "postgresql" | "mariadb"
+      offsite_storage_provider: "s3" | "backblaze_b2" | "wasabi" | "gcs"
+      restore_mode: "full" | "files_only" | "database_only" | "partial"
+      restore_status: "previewing" | "ready" | "restoring" | "completed" | "failed" | "cancelled"
       package_action_type:
         | "composer_install"
         | "npm_install"
@@ -1631,11 +1749,15 @@ export const Constants = {
       app_role: ["super_admin", "admin", "user"],
       app_template_runtime: ["php", "nodejs", "python", "wordpress", "static"],
       backup_frequency: ["daily", "weekly", "monthly"],
+      backup_verification_status: ["pending", "verified", "warning", "failed"],
       backup_status: ["pending", "in_progress", "completed", "failed"],
       backup_type: ["full", "files", "database", "scheduled"],
       cron_job_status: ["success", "failed", "running"],
       cron_job_type: ["backup", "cleanup", "maintenance", "custom"],
       db_type: ["mysql", "postgresql", "mariadb"],
+      offsite_storage_provider: ["s3", "backblaze_b2", "wasabi", "gcs"],
+      restore_mode: ["full", "files_only", "database_only", "partial"],
+      restore_status: ["previewing", "ready", "restoring", "completed", "failed", "cancelled"],
       package_action_type: [
         "composer_install",
         "npm_install",
