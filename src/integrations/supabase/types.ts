@@ -799,6 +799,89 @@ export type Database = {
           },
         ]
       }
+      site_ssl_certificates: {
+        Row: {
+          alert_before_days: number
+          alternate_names: string[]
+          auto_redirect_http: boolean
+          certificate_chain_diagnostics: string | null
+          certificate_chain_issuer: string | null
+          certificate_chain_valid: boolean | null
+          certificate_status: Database["public"]["Enums"]["ssl_certificate_status"]
+          challenge_type: Database["public"]["Enums"]["ssl_challenge_type"]
+          created_at: string
+          dns_provider: string | null
+          expires_at: string | null
+          id: string
+          is_wildcard: boolean
+          issued_at: string | null
+          last_alert_sent_at: string | null
+          last_error: string | null
+          primary_domain: string
+          provider: string
+          renewed_at: string | null
+          revoked_at: string | null
+          site_id: string
+          updated_at: string
+        }
+        Insert: {
+          alert_before_days?: number
+          alternate_names?: string[]
+          auto_redirect_http?: boolean
+          certificate_chain_diagnostics?: string | null
+          certificate_chain_issuer?: string | null
+          certificate_chain_valid?: boolean | null
+          certificate_status?: Database["public"]["Enums"]["ssl_certificate_status"]
+          challenge_type?: Database["public"]["Enums"]["ssl_challenge_type"]
+          created_at?: string
+          dns_provider?: string | null
+          expires_at?: string | null
+          id?: string
+          is_wildcard?: boolean
+          issued_at?: string | null
+          last_alert_sent_at?: string | null
+          last_error?: string | null
+          primary_domain: string
+          provider?: string
+          renewed_at?: string | null
+          revoked_at?: string | null
+          site_id: string
+          updated_at?: string
+        }
+        Update: {
+          alert_before_days?: number
+          alternate_names?: string[]
+          auto_redirect_http?: boolean
+          certificate_chain_diagnostics?: string | null
+          certificate_chain_issuer?: string | null
+          certificate_chain_valid?: boolean | null
+          certificate_status?: Database["public"]["Enums"]["ssl_certificate_status"]
+          challenge_type?: Database["public"]["Enums"]["ssl_challenge_type"]
+          created_at?: string
+          dns_provider?: string | null
+          expires_at?: string | null
+          id?: string
+          is_wildcard?: boolean
+          issued_at?: string | null
+          last_alert_sent_at?: string | null
+          last_error?: string | null
+          primary_domain?: string
+          provider?: string
+          renewed_at?: string | null
+          revoked_at?: string | null
+          site_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_ssl_certificates_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       site_service_deployments: {
         Row: {
           action: Database["public"]["Enums"]["service_action_type"]
@@ -1142,6 +1225,14 @@ export type Database = {
         | "deployed"
         | "failed"
         | "rolled_back"
+      ssl_certificate_status:
+        | "pending"
+        | "issued"
+        | "renewing"
+        | "revoked"
+        | "failed"
+        | "expiring"
+      ssl_challenge_type: "http_01" | "dns_01"
       site_role: "owner" | "admin" | "developer" | "viewer"
       site_status: "active" | "pending" | "suspended" | "error"
       site_type: "wordpress" | "nodejs" | "python" | "php" | "static" | "custom"
@@ -1330,6 +1421,15 @@ export const Constants = {
         "failed",
         "rolled_back",
       ],
+      ssl_certificate_status: [
+        "pending",
+        "issued",
+        "renewing",
+        "revoked",
+        "failed",
+        "expiring",
+      ],
+      ssl_challenge_type: ["http_01", "dns_01"],
       site_role: ["owner", "admin", "developer", "viewer"],
       site_status: ["active", "pending", "suspended", "error"],
       site_type: ["wordpress", "nodejs", "python", "php", "static", "custom"],

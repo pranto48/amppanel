@@ -22,9 +22,17 @@ import {
   type VhostTemplateType,
   type WebServerType,
 } from "@/hooks/useSiteServiceConfig";
+import {
+  useIssueSiteSsl,
+  useRenewSiteSsl,
+  useRevokeSiteSsl,
+  useSiteSslCertificate,
+  useSslDiagnostics,
+  type SslChallengeType,
+} from "@/hooks/useSiteSsl";
 import { useToast } from "@/hooks/use-toast";
 import { useLogActivity } from "@/hooks/useActivityLogs";
-import { Settings, Loader2, Shield, Server, RotateCcw, FileCode2, Rocket, FileSearch, ScrollText } from "lucide-react";
+import { Settings, Loader2, Shield, Server, RotateCcw, FileCode2, Rocket, FileSearch, ScrollText, RefreshCw, Link2, Ban } from "lucide-react";
 import type { Tables } from "@/integrations/supabase/types";
 
 type Site = Tables<"sites">;
@@ -75,12 +83,20 @@ export const EditSiteDialog = ({ site, open, onOpenChange }: EditSiteDialogProps
   const [phpIniOverridesText, setPhpIniOverridesText] = useState('{\n  "memory_limit": "256M",\n  "upload_max_filesize": "64M"\n}');
   const [accessLogPath, setAccessLogPath] = useState("");
   const [errorLogPath, setErrorLogPath] = useState("");
+  const [sslChallengeType, setSslChallengeType] = useState<SslChallengeType>("http_01");
+  const [sslWildcard, setSslWildcard] = useState(false);
+  const [sslDnsProvider, setSslDnsProvider] = useState("");
+  const [sslAutoRedirect, setSslAutoRedirect] = useState(true);
+  const [sslAlertBeforeDays, setSslAlertBeforeDays] = useState("14");
+  const [sslAlternateNames, setSslAlternateNames] = useState("");
+  const [sslDiagnosticsOutput, setSslDiagnosticsOutput] = useState<string | null>(null);
   const [previewOutput, setPreviewOutput] = useState<string | null>(null);
   const [generatedVhostConfig, setGeneratedVhostConfig] = useState<string | null>(null);
   const [generatedPoolConfig, setGeneratedPoolConfig] = useState<string | null>(null);
 
   const updateSite = useUpdateSite();
   const { data: serviceConfig } = useSiteServiceConfig(site.id);
+  const { data: sslCertificate } = useSiteSslCertificate(site.id);
   const { data: deployments = [] } = useSiteServiceDeployments(site.id);
   const { data: accessLogs = [] } = useSiteServiceLogs(site.id, "access");
   const { data: errorLogs = [] } = useSiteServiceLogs(site.id, "error");
@@ -88,6 +104,10 @@ export const EditSiteDialog = ({ site, open, onOpenChange }: EditSiteDialogProps
   const testService = useTestSiteService();
   const deployService = useDeploySiteService();
   const rollbackService = useRollbackSiteService();
+  const issueSsl = useIssueSiteSsl();
+  const renewSsl = useRenewSiteSsl();
+  const revokeSsl = useRevokeSiteSsl();
+  const runSslDiagnostics = useSslDiagnostics();
   const { toast } = useToast();
   const { logSiteUpdated } = useLogActivity();
 
@@ -117,6 +137,17 @@ export const EditSiteDialog = ({ site, open, onOpenChange }: EditSiteDialogProps
     setGeneratedVhostConfig(serviceConfig.generated_vhost_config);
     setGeneratedPoolConfig(serviceConfig.generated_pool_config);
   }, [serviceConfig, site.php_version]);
+
+  useEffect(() => {
+    if (!sslCertificate) return;
+    setSslChallengeType(sslCertificate.challenge_type);
+    setSslWildcard(sslCertificate.is_wildcard);
+    setSslDnsProvider(sslCertificate.dns_provider || "");
+    setSslAutoRedirect(sslCertificate.auto_redirect_http);
+    setSslAlertBeforeDays(String(sslCertificate.alert_before_days));
+    setSslAlternateNames(sslCertificate.alternate_names.join(", "));
+    setSslDiagnosticsOutput(sslCertificate.certificate_chain_diagnostics);
+  }, [sslCertificate]);
 
   const latestDeployableSnapshot = useMemo(
     () => deployments.find((deployment) => deployment.action === "deploy" && deployment.status === "deployed"),
@@ -238,6 +269,57 @@ export const EditSiteDialog = ({ site, open, onOpenChange }: EditSiteDialogProps
     }
   };
 
+  const buildSslPayload = () => ({
+    challenge_type: sslWildcard ? "dns_01" : sslChallengeType,
+    is_wildcard: sslWildcard,
+    dns_provider: sslDnsProvider || null,
+    auto_redirect_http: sslAutoRedirect,
+    alert_before_days: Number(sslAlertBeforeDays) || 14,
+    alternate_names: sslAlternateNames.split(",").map((name) => name.trim()).filter(Boolean),
+  });
+
+  const handleIssueSsl = async () => {
+    try {
+      const result = await issueSsl.mutateAsync({ siteId: site.id, config: buildSslPayload() });
+      setSslDiagnosticsOutput(result.diagnostics || result.certificate.certificate_chain_diagnostics);
+      setSslEnabled(true);
+      toast({ title: "Certificate issued", description: `Let's Encrypt certificate issued for ${result.certificate.primary_domain}.` });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Issue failed", description: error.message || "Unable to issue certificate." });
+    }
+  };
+
+  const handleRenewSsl = async () => {
+    try {
+      const result = await renewSsl.mutateAsync({ siteId: site.id, config: buildSslPayload() });
+      setSslDiagnosticsOutput(result.diagnostics || result.certificate.certificate_chain_diagnostics);
+      toast({ title: "Certificate renewed", description: `Certificate renewed; expires ${result.certificate.expires_at || "soon"}.` });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Renewal failed", description: error.message || "Unable to renew certificate." });
+    }
+  };
+
+  const handleRevokeSsl = async () => {
+    try {
+      const result = await revokeSsl.mutateAsync({ siteId: site.id, config: buildSslPayload() });
+      setSslDiagnosticsOutput(result.certificate.certificate_chain_diagnostics);
+      setSslEnabled(false);
+      toast({ title: "Certificate revoked", description: `${result.certificate.primary_domain} certificate was revoked.` });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Revoke failed", description: error.message || "Unable to revoke certificate." });
+    }
+  };
+
+  const handleSslDiagnostics = async () => {
+    try {
+      const result = await runSslDiagnostics.mutateAsync({ siteId: site.id, config: buildSslPayload() });
+      setSslDiagnosticsOutput(result.diagnostics || result.certificate.certificate_chain_diagnostics);
+      toast({ title: "Diagnostics updated", description: "Certificate chain diagnostics were refreshed." });
+    } catch (error: any) {
+      toast({ variant: "destructive", title: "Diagnostics failed", description: error.message || "Unable to fetch diagnostics." });
+    }
+  };
+
   const isPhpSite = site.site_type === "php" || site.site_type === "wordpress";
   const isProxyTemplate = template === "reverse_proxy";
 
@@ -307,10 +389,56 @@ export const EditSiteDialog = ({ site, open, onOpenChange }: EditSiteDialogProps
                 <div className="flex items-center justify-between p-4 rounded-lg bg-secondary/50 border border-border">
                   <div>
                     <p className="text-sm font-medium text-foreground">Enable SSL/HTTPS</p>
-                    <p className="text-xs text-muted-foreground">{sslEnabled ? "Let's Encrypt certificate active" : "No SSL certificate installed"}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {sslCertificate?.expires_at
+                        ? `Status: ${sslCertificate.certificate_status.replace(/_/g, " ")} · Expires ${new Date(sslCertificate.expires_at).toLocaleDateString()}`
+                        : sslEnabled
+                          ? "Let's Encrypt enabled but no certificate has been issued yet"
+                          : "No SSL certificate installed"}
+                    </p>
                   </div>
                   <Switch checked={sslEnabled} onCheckedChange={setSslEnabled} />
                 </div>
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Challenge Type</Label>
+                    <Select value={sslWildcard ? "dns_01" : sslChallengeType} onValueChange={(v) => setSslChallengeType(v as SslChallengeType)}>
+                      <SelectTrigger className="bg-secondary border-border"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="http_01">HTTP-01</SelectItem>
+                        <SelectItem value="dns_01">DNS-01</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="flex items-center justify-between"><span>Wildcard Certificate</span><Switch checked={sslWildcard} onCheckedChange={(checked) => { setSslWildcard(checked); if (checked) setSslChallengeType("dns_01"); }} /></Label>
+                    <p className="rounded-md border border-border bg-secondary/30 px-3 py-2 text-xs text-muted-foreground">Wildcard requests automatically force DNS-01 validation.</p>
+                  </div>
+                </div>
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div className="space-y-2"><Label>DNS Provider</Label><Input value={sslDnsProvider} onChange={(e) => setSslDnsProvider(e.target.value)} placeholder="cloudflare" className="bg-secondary border-border" /></div>
+                  <div className="space-y-2"><Label>Expiry Alert (days)</Label><Input type="number" value={sslAlertBeforeDays} onChange={(e) => setSslAlertBeforeDays(e.target.value)} className="bg-secondary border-border" /></div>
+                  <div className="space-y-2"><Label className="flex items-center justify-between"><span>Auto HTTP → HTTPS Redirect</span><Switch checked={sslAutoRedirect} onCheckedChange={setSslAutoRedirect} /></Label></div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Alternate Names (comma-separated)</Label>
+                  <Input value={sslAlternateNames} onChange={(e) => setSslAlternateNames(e.target.value)} placeholder="www.example.com, api.example.com" className="bg-secondary border-border" />
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  <Button type="button" variant="outline" onClick={handleIssueSsl} disabled={issueSsl.isPending}>
+                    {issueSsl.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Shield className="w-4 h-4 mr-2" />}Issue
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleRenewSsl} disabled={renewSsl.isPending}>
+                    {renewSsl.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}Renew
+                  </Button>
+                  <Button type="button" variant="outline" onClick={handleSslDiagnostics} disabled={runSslDiagnostics.isPending}>
+                    {runSslDiagnostics.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Link2 className="w-4 h-4 mr-2" />}Chain Diagnostics
+                  </Button>
+                  <Button type="button" variant="secondary" onClick={handleRevokeSsl} disabled={revokeSsl.isPending}>
+                    {revokeSsl.isPending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Ban className="w-4 h-4 mr-2" />}Revoke
+                  </Button>
+                </div>
+                <pre className="whitespace-pre-wrap rounded-md bg-secondary/40 p-3 text-xs text-muted-foreground min-h-24 overflow-auto">{sslDiagnosticsOutput || "Run Issue/Renew/Diagnostics to inspect certificate chain health, expiry, redirect mode, and wildcard challenge requirements."}</pre>
               </div>
 
               <div className="grid md:grid-cols-2 gap-4">
