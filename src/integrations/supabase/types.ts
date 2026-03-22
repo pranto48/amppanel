@@ -646,17 +646,23 @@ export type Database = {
       }
       site_service_configs: {
         Row: {
+          access_log_path: string | null
           created_at: string
           custom_runtime_config: Json
           custom_vhost_config: string | null
+          error_log_path: string | null
           env_vars: Json
           generated_pool_config: string | null
           generated_vhost_config: string | null
           id: string
           last_applied_at: string | null
           last_deployment_status: Database["public"]["Enums"]["service_deployment_status"]
+          last_test_output: string | null
+          last_test_passed: boolean | null
+          last_tested_at: string | null
           last_validation_output: string | null
           listen_port: number | null
+          php_ini_overrides: Json
           php_fpm_enabled: boolean
           php_fpm_max_children: number
           php_fpm_max_requests: number
@@ -674,17 +680,23 @@ export type Database = {
           web_server: Database["public"]["Enums"]["web_server_type"]
         }
         Insert: {
+          access_log_path?: string | null
           created_at?: string
           custom_runtime_config?: Json
           custom_vhost_config?: string | null
+          error_log_path?: string | null
           env_vars?: Json
           generated_pool_config?: string | null
           generated_vhost_config?: string | null
           id?: string
           last_applied_at?: string | null
           last_deployment_status?: Database["public"]["Enums"]["service_deployment_status"]
+          last_test_output?: string | null
+          last_test_passed?: boolean | null
+          last_tested_at?: string | null
           last_validation_output?: string | null
           listen_port?: number | null
+          php_ini_overrides?: Json
           php_fpm_enabled?: boolean
           php_fpm_max_children?: number
           php_fpm_max_requests?: number
@@ -702,17 +714,23 @@ export type Database = {
           web_server?: Database["public"]["Enums"]["web_server_type"]
         }
         Update: {
+          access_log_path?: string | null
           created_at?: string
           custom_runtime_config?: Json
           custom_vhost_config?: string | null
+          error_log_path?: string | null
           env_vars?: Json
           generated_pool_config?: string | null
           generated_vhost_config?: string | null
           id?: string
           last_applied_at?: string | null
           last_deployment_status?: Database["public"]["Enums"]["service_deployment_status"]
+          last_test_output?: string | null
+          last_test_passed?: boolean | null
+          last_tested_at?: string | null
           last_validation_output?: string | null
           listen_port?: number | null
+          php_ini_overrides?: Json
           php_fpm_enabled?: boolean
           php_fpm_max_children?: number
           php_fpm_max_requests?: number
@@ -732,6 +750,48 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "site_service_configs_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      site_service_logs: {
+        Row: {
+          config_id: string | null
+          created_at: string
+          id: string
+          log_type: string
+          message: string
+          site_id: string
+        }
+        Insert: {
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          log_type: string
+          message: string
+          site_id: string
+        }
+        Update: {
+          config_id?: string | null
+          created_at?: string
+          id?: string
+          log_type?: string
+          message?: string
+          site_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "site_service_logs_config_id_fkey"
+            columns: ["config_id"]
+            isOneToOne: false
+            referencedRelation: "site_service_configs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "site_service_logs_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
             referencedRelation: "sites"
@@ -1075,7 +1135,7 @@ export type Database = {
         | "failed"
         | "uninstalling"
       runtime_environment: "production" | "staging" | "development"
-      service_action_type: "provision" | "deploy" | "rollback"
+      service_action_type: "provision" | "deploy" | "rollback" | "test"
       service_deployment_status:
         | "pending"
         | "validated"
@@ -1262,7 +1322,7 @@ export const Constants = {
         "uninstalling",
       ],
       runtime_environment: ["production", "staging", "development"],
-      service_action_type: ["provision", "deploy", "rollback"],
+      service_action_type: ["provision", "deploy", "rollback", "test"],
       service_deployment_status: [
         "pending",
         "validated",
