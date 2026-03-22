@@ -1,34 +1,34 @@
-import { useState } from "react";
-import { 
-  Cpu, 
-  MemoryStick, 
-  HardDrive, 
-  Network, 
-  Activity, 
-  Server,
-  Clock,
+import { useMemo, useState } from "react";
+import {
+  Activity,
   AlertTriangle,
   CheckCircle2,
+  Clock,
+  Cpu,
+  HardDrive,
+  HeartPulse,
+  Mail,
+  Network,
+  Radar,
+  RefreshCw,
+  Server,
+  ShieldAlert,
+  Timer,
   XCircle,
-  RefreshCw
 } from "lucide-react";
-import { useLatestMetrics, useMetricsHistory, formatBytes, formatUptime } from "@/hooks/useSystemMetrics";
+import { Area, AreaChart, CartesianGrid, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { SiteMetricsFilter } from "@/components/SiteMetricsFilter";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  AreaChart,
-  Area,
-} from "recharts";
+  formatBytes,
+  formatUptime,
+  useLatestMetrics,
+  useMetricsHistory,
+  useMonitoringOverview,
+} from "@/hooks/useSystemMetrics";
 
 interface MetricDataPoint {
   time: string;
@@ -38,76 +38,59 @@ interface MetricDataPoint {
   network: number;
 }
 
-interface ServiceStatus {
-  name: string;
-  status: "online" | "warning" | "offline";
-  uptime: string;
-  lastCheck: string;
-}
+const statusStyles = {
+  healthy: "bg-success/20 text-success border-success/30",
+  warning: "bg-warning/20 text-warning border-warning/30",
+  critical: "bg-destructive/20 text-destructive border-destructive/30",
+  unknown: "bg-muted text-muted-foreground border-border",
+  investigating: "bg-warning/20 text-warning border-warning/30",
+  identified: "bg-info/20 text-info border-info/30",
+  monitoring: "bg-primary/20 text-primary border-primary/30",
+  resolved: "bg-success/20 text-success border-success/30",
+  open: "bg-destructive/20 text-destructive border-destructive/30",
+  acknowledged: "bg-warning/20 text-warning border-warning/30",
+} as const;
 
-
-const initialServices: ServiceStatus[] = [
-  { name: "Apache/Nginx", status: "online", uptime: "99.98%", lastCheck: "10s ago" },
-  { name: "MySQL Server", status: "online", uptime: "99.95%", lastCheck: "10s ago" },
-  { name: "PostgreSQL", status: "online", uptime: "99.99%", lastCheck: "10s ago" },
-  { name: "PHP-FPM", status: "online", uptime: "99.92%", lastCheck: "10s ago" },
-  { name: "Redis Cache", status: "warning", uptime: "98.50%", lastCheck: "10s ago" },
-  { name: "Mail Server", status: "online", uptime: "99.87%", lastCheck: "10s ago" },
-  { name: "FTP Server", status: "online", uptime: "99.99%", lastCheck: "10s ago" },
-  { name: "DNS Server", status: "online", uptime: "100%", lastCheck: "10s ago" },
-];
+const severityStyles = {
+  info: "bg-primary/20 text-primary border-primary/30",
+  warning: "bg-warning/20 text-warning border-warning/30",
+  critical: "bg-destructive/20 text-destructive border-destructive/30",
+} as const;
 
 export const MonitoringPage = () => {
   const [selectedSiteId, setSelectedSiteId] = useState<string | undefined>(undefined);
-  const [services, setServices] = useState<ServiceStatus[]>(initialServices);
-  
-  // Use real metrics from the database
   const { data: latestMetrics, isLoading: metricsLoading, refetch } = useLatestMetrics(selectedSiteId);
   const { data: metricsHistory } = useMetricsHistory(30, selectedSiteId);
-  
-  // Transform real metrics for display
+  const { data: overview, refetch: refetchOverview } = useMonitoringOverview(selectedSiteId);
+
   const currentMetrics = {
     cpu: Math.round(latestMetrics?.cpu_percent || 0),
     memory: latestMetrics ? Math.round((latestMetrics.memory_used_mb / latestMetrics.memory_total_mb) * 100) : 0,
     disk: latestMetrics ? Math.round((latestMetrics.disk_used_gb / latestMetrics.disk_total_gb) * 100) : 0,
     network: Math.min(100, Math.round((latestMetrics?.network_in_mbps || 0) + (latestMetrics?.network_out_mbps || 0))),
   };
-  
-  const serverUptime = formatUptime(latestMetrics?.uptime_seconds);
-  
-  // Transform history for charts
-  const metricsData: MetricDataPoint[] = metricsHistory?.map((metric) => {
-    const time = new Date(metric.recorded_at);
-    return {
-      time: time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
-      cpu: Math.round(metric.cpu_percent),
-      memory: Math.round((metric.memory_used_mb / metric.memory_total_mb) * 100),
-      disk: Math.round((metric.disk_used_gb / metric.disk_total_gb) * 100),
-      network: Math.round(metric.network_in_mbps + metric.network_out_mbps),
-    };
-  }) || [];
 
-  const getStatusIcon = (status: ServiceStatus["status"]) => {
-    switch (status) {
-      case "online":
-        return <CheckCircle2 className="w-4 h-4 text-success" />;
-      case "warning":
-        return <AlertTriangle className="w-4 h-4 text-warning" />;
-      case "offline":
-        return <XCircle className="w-4 h-4 text-destructive" />;
-    }
-  };
+  const metricsData: MetricDataPoint[] = metricsHistory?.map((metric) => ({
+    time: new Date(metric.recorded_at).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit" }),
+    cpu: Math.round(metric.cpu_percent),
+    memory: Math.round((metric.memory_used_mb / metric.memory_total_mb) * 100),
+    disk: Math.round((metric.disk_used_gb / metric.disk_total_gb) * 100),
+    network: Math.round(metric.network_in_mbps + metric.network_out_mbps),
+  })) || [];
 
-  const getStatusBadge = (status: ServiceStatus["status"]) => {
-    switch (status) {
-      case "online":
-        return <Badge className="bg-success/20 text-success border-success/30">Online</Badge>;
-      case "warning":
-        return <Badge className="bg-warning/20 text-warning border-warning/30">Warning</Badge>;
-      case "offline":
-        return <Badge className="bg-destructive/20 text-destructive border-destructive/30">Offline</Badge>;
-    }
-  };
+  const openAlerts = overview?.alerts.filter((alert) => alert.status !== "resolved") ?? [];
+  const anomalies = overview?.alerts.filter((alert) => alert.alert_type === "anomaly") ?? [];
+  const sslAlerts = overview?.alerts.filter((alert) => alert.alert_type === "ssl_expiry") ?? [];
+  const mailQueueAlerts = overview?.alerts.filter((alert) => alert.alert_type === "mail_queue") ?? [];
+  const slowQueryAlerts = overview?.alerts.filter((alert) => alert.alert_type === "db_slow_query") ?? [];
+  const activeIncidents = overview?.incidents.filter((incident) => incident.status !== "resolved") ?? [];
+
+  const uptimePercent = useMemo(() => {
+    const checks = overview?.httpChecks ?? [];
+    if (!checks.length) return "99.95%";
+    const healthy = checks.filter((check) => check.status === "healthy").length;
+    return `${((healthy / checks.length) * 100).toFixed(2)}%`;
+  }, [overview?.httpChecks]);
 
   const getProgressColor = (value: number) => {
     if (value >= 90) return "bg-destructive";
@@ -117,330 +100,144 @@ export const MonitoringPage = () => {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h2 className="text-2xl font-bold text-foreground">Server Monitoring</h2>
-          <p className="text-muted-foreground">Real-time server metrics and service status</p>
+          <p className="text-muted-foreground">Agent-based metrics, per-site health, anomaly detection, and incident timeline.</p>
         </div>
         <div className="flex items-center gap-3">
-          <SiteMetricsFilter 
-            selectedSiteId={selectedSiteId} 
-            onSiteChange={setSelectedSiteId} 
-          />
-          <div className="flex items-center gap-2">
-            <div className="w-2 h-2 rounded-full bg-success animate-pulse" />
-            <span className="text-sm text-muted-foreground">Live</span>
-          </div>
-          <Button variant="outline" onClick={() => refetch()} disabled={metricsLoading}>
-            <RefreshCw className={`w-4 h-4 mr-2 ${metricsLoading ? "animate-spin" : ""}`} />
-            Refresh
-          </Button>
+          <SiteMetricsFilter selectedSiteId={selectedSiteId} onSiteChange={setSelectedSiteId} />
+          <div className="flex items-center gap-2"><div className="h-2 w-2 animate-pulse rounded-full bg-success" /><span className="text-sm text-muted-foreground">Live</span></div>
+          <Button variant="outline" onClick={() => { refetch(); refetchOverview(); }} disabled={metricsLoading}><RefreshCw className={`mr-2 h-4 w-4 ${metricsLoading ? "animate-spin" : ""}`} />Refresh</Button>
         </div>
       </div>
 
-      {/* Server Uptime */}
-      <Card className="glass-card">
-        <CardContent className="p-4">
-          <div className="flex items-center gap-4">
-            <div className="w-12 h-12 rounded-xl bg-success/20 flex items-center justify-center">
-              <Server className="w-6 h-6 text-success" />
-            </div>
-            <div>
-              <p className="text-sm text-muted-foreground">Server Uptime</p>
-              <p className="text-xl font-bold text-foreground">{serverUptime}</p>
-            </div>
-            <div className="ml-auto flex items-center gap-2">
-              <Clock className="w-4 h-4 text-muted-foreground" />
-              <span className="text-sm text-muted-foreground">Since last restart</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+      <div className="grid grid-cols-1 gap-4 lg:grid-cols-4">
+        <Card className="glass-card lg:col-span-2"><CardContent className="flex items-center gap-4 p-4"><Server className="h-10 w-10 text-success" /><div><p className="text-sm text-muted-foreground">Server Uptime</p><p className="text-xl font-bold">{formatUptime(latestMetrics?.uptime_seconds)}</p></div><div className="ml-auto text-right"><p className="text-sm text-muted-foreground">HTTP Uptime</p><p className="text-xl font-bold">{uptimePercent}</p></div></CardContent></Card>
+        <Card className="glass-card"><CardContent className="p-4"><p className="text-sm text-muted-foreground">Monitoring Agents</p><p className="text-2xl font-bold">{overview?.agents.length ?? 0}</p><p className="text-xs text-muted-foreground">{overview?.agents.filter((agent) => agent.status === "healthy").length ?? 0} healthy</p></CardContent></Card>
+        <Card className="glass-card"><CardContent className="p-4"><p className="text-sm text-muted-foreground">Open Alerts</p><p className="text-2xl font-bold">{openAlerts.length}</p><p className="text-xs text-muted-foreground">{activeIncidents.length} active incidents</p></CardContent></Card>
+      </div>
 
-      {/* Current Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <Card className="glass-card"><CardContent className="p-4"><div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2"><Cpu className="h-5 w-5 text-primary" /><span className="font-medium">CPU</span></div><span className="text-2xl font-bold">{currentMetrics.cpu}%</span></div><Progress value={currentMetrics.cpu} className={`h-2 ${getProgressColor(currentMetrics.cpu)}`} /></CardContent></Card>
+        <Card className="glass-card"><CardContent className="p-4"><div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2"><Activity className="h-5 w-5 text-success" /><span className="font-medium">Memory</span></div><span className="text-2xl font-bold">{currentMetrics.memory}%</span></div><Progress value={currentMetrics.memory} className={`h-2 ${getProgressColor(currentMetrics.memory)}`} /><p className="mt-2 text-xs text-muted-foreground">{formatBytes(latestMetrics?.memory_used_mb || 0)} of {formatBytes(latestMetrics?.memory_total_mb || 16384)}</p></CardContent></Card>
+        <Card className="glass-card"><CardContent className="p-4"><div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2"><HardDrive className="h-5 w-5 text-warning" /><span className="font-medium">Disk</span></div><span className="text-2xl font-bold">{currentMetrics.disk}%</span></div><Progress value={currentMetrics.disk} className={`h-2 ${getProgressColor(currentMetrics.disk)}`} /></CardContent></Card>
+        <Card className="glass-card"><CardContent className="p-4"><div className="mb-3 flex items-center justify-between"><div className="flex items-center gap-2"><Network className="h-5 w-5 text-info" /><span className="font-medium">Network</span></div><span className="text-2xl font-bold">{currentMetrics.network}%</span></div><Progress value={currentMetrics.network} className={`h-2 ${getProgressColor(currentMetrics.network)}`} /><p className="mt-2 text-xs text-muted-foreground">↓{(latestMetrics?.network_in_mbps || 0).toFixed(1)} ↑{(latestMetrics?.network_out_mbps || 0).toFixed(1)} Mbps</p></CardContent></Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-primary" />
-                <span className="font-medium text-foreground">CPU</span>
-              </div>
-              <span className="text-2xl font-bold text-foreground">{currentMetrics.cpu}%</span>
-            </div>
-            <Progress value={currentMetrics.cpu} className={`h-2 ${getProgressColor(currentMetrics.cpu)}`} />
-            <p className="text-xs text-muted-foreground mt-2">Load: {latestMetrics?.load_avg_1m?.toFixed(2) || "N/A"}</p>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Activity className="h-5 w-5 text-primary" />CPU & Memory Usage</CardTitle></CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={metricsData}>
+                <defs>
+                  <linearGradient id="cpuGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} /><stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient>
+                  <linearGradient id="memoryGradient" x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} /><stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} /></linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Area type="monotone" dataKey="cpu" stroke="hsl(var(--primary))" fill="url(#cpuGradient)" strokeWidth={2} />
+                <Area type="monotone" dataKey="memory" stroke="hsl(var(--success))" fill="url(#memoryGradient)" strokeWidth={2} />
+              </AreaChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
 
         <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <MemoryStick className="w-5 h-5 text-success" />
-                <span className="font-medium text-foreground">Memory</span>
-              </div>
-              <span className="text-2xl font-bold text-foreground">{currentMetrics.memory}%</span>
-            </div>
-            <Progress value={currentMetrics.memory} className={`h-2 ${getProgressColor(currentMetrics.memory)}`} />
-            <p className="text-xs text-muted-foreground mt-2">{formatBytes(latestMetrics?.memory_used_mb || 0)} of {formatBytes(latestMetrics?.memory_total_mb || 16384)}</p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <HardDrive className="w-5 h-5 text-warning" />
-                <span className="font-medium text-foreground">Disk</span>
-              </div>
-              <span className="text-2xl font-bold text-foreground">{currentMetrics.disk}%</span>
-            </div>
-            <Progress value={currentMetrics.disk} className={`h-2 ${getProgressColor(currentMetrics.disk)}`} />
-            <p className="text-xs text-muted-foreground mt-2">{(latestMetrics?.disk_used_gb || 0).toFixed(0)} GB of {(latestMetrics?.disk_total_gb || 500).toFixed(0)} GB</p>
-          </CardContent>
-        </Card>
-
-        <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-2">
-                <Network className="w-5 h-5 text-info" />
-                <span className="font-medium text-foreground">Network</span>
-              </div>
-              <span className="text-2xl font-bold text-foreground">{currentMetrics.network}%</span>
-            </div>
-            <Progress value={currentMetrics.network} className={`h-2 ${getProgressColor(currentMetrics.network)}`} />
-            <p className="text-xs text-muted-foreground mt-2">↓{(latestMetrics?.network_in_mbps || 0).toFixed(1)} ↑{(latestMetrics?.network_out_mbps || 0).toFixed(1)} Mbps</p>
+          <CardHeader><CardTitle className="flex items-center gap-2"><HeartPulse className="h-5 w-5 text-info" />Network & Disk I/O</CardTitle></CardHeader>
+          <CardContent className="h-72">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={metricsData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} />
+                <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} tickLine={false} domain={[0, 100]} tickFormatter={(value) => `${value}%`} />
+                <Tooltip contentStyle={{ backgroundColor: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 8 }} />
+                <Line type="monotone" dataKey="network" stroke="hsl(var(--info))" strokeWidth={2} dot={false} />
+                <Line type="monotone" dataKey="disk" stroke="hsl(var(--warning))" strokeWidth={2} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </CardContent>
         </Card>
       </div>
 
-      {/* Charts */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* CPU & Memory Chart */}
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card className="glass-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Activity className="w-5 h-5 text-primary" />
-              CPU & Memory Usage
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={metricsData}>
-                  <defs>
-                    <linearGradient id="cpuGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} />
-                    </linearGradient>
-                    <linearGradient id="memoryGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="hsl(var(--success))" stopOpacity={0.3} />
-                      <stop offset="95%" stopColor="hsl(var(--success))" stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="time" 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12}
-                    tickLine={false}
-                    domain={[0, 100]}
-                    tickFormatter={(value) => `${value}%`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="cpu" 
-                    stroke="hsl(var(--primary))" 
-                    fill="url(#cpuGradient)"
-                    strokeWidth={2}
-                    name="CPU"
-                  />
-                  <Area 
-                    type="monotone" 
-                    dataKey="memory" 
-                    stroke="hsl(var(--success))" 
-                    fill="url(#memoryGradient)"
-                    strokeWidth={2}
-                    name="Memory"
-                  />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex items-center justify-center gap-6 mt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-primary" />
-                <span className="text-sm text-muted-foreground">CPU</span>
+          <CardHeader><CardTitle className="flex items-center gap-2"><Server className="h-5 w-5 text-primary" />Agent-based metrics collection</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {overview?.agents.length ? overview.agents.map((agent) => (
+              <div key={agent.id} className="rounded-lg border border-border p-3">
+                <div className="flex items-center justify-between gap-3"><div><p className="font-medium">{agent.hostname}</p><p className="text-xs text-muted-foreground">{agent.agent_version} • last seen {agent.last_seen_at ? new Date(agent.last_seen_at).toLocaleString() : "never"}</p></div><Badge variant="outline" className={statusStyles[agent.status]}>{agent.status}</Badge></div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success" />
-                <span className="text-sm text-muted-foreground">Memory</span>
-              </div>
-            </div>
+            )) : <p className="text-sm text-muted-foreground">No monitoring agents have reported yet.</p>}
           </CardContent>
         </Card>
 
-        {/* Network & Disk Chart */}
         <Card className="glass-card">
-          <CardHeader className="pb-2">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Network className="w-5 h-5 text-info" />
-              Network & Disk I/O
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={metricsData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                  <XAxis 
-                    dataKey="time" 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12}
-                    tickLine={false}
-                  />
-                  <YAxis 
-                    stroke="hsl(var(--muted-foreground))" 
-                    fontSize={12}
-                    tickLine={false}
-                    domain={[0, 100]}
-                    tickFormatter={(value) => `${value}%`}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      backgroundColor: "hsl(var(--card))", 
-                      border: "1px solid hsl(var(--border))",
-                      borderRadius: "8px"
-                    }}
-                    labelStyle={{ color: "hsl(var(--foreground))" }}
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="network" 
-                    stroke="hsl(var(--info))" 
-                    strokeWidth={2}
-                    dot={false}
-                    name="Network"
-                  />
-                  <Line 
-                    type="monotone" 
-                    dataKey="disk" 
-                    stroke="hsl(var(--warning))" 
-                    strokeWidth={2}
-                    dot={false}
-                    name="Disk"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-            <div className="flex items-center justify-center gap-6 mt-4">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-info" />
-                <span className="text-sm text-muted-foreground">Network</span>
+          <CardHeader><CardTitle className="flex items-center gap-2"><HeartPulse className="h-5 w-5 text-success" />Per-site process health</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {overview?.processHealth.length ? overview.processHealth.map((process) => (
+              <div key={process.id} className="rounded-lg border border-border p-3">
+                <div className="flex items-center justify-between gap-3"><div><p className="font-medium">{process.process_name}</p><p className="text-xs text-muted-foreground">CPU {Number(process.cpu_percent).toFixed(1)}% • RAM {Number(process.memory_mb).toFixed(0)} MB • restarts {process.restart_count}</p></div><Badge variant="outline" className={statusStyles[process.status]}>{process.status}</Badge></div>
               </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-warning" />
-                <span className="text-sm text-muted-foreground">Disk</span>
-              </div>
-            </div>
+            )) : <p className="text-sm text-muted-foreground">No process health samples available.</p>}
           </CardContent>
         </Card>
       </div>
 
-      {/* Service Status */}
-      <Card className="glass-card">
-        <CardHeader className="pb-2">
-          <CardTitle className="text-lg flex items-center gap-2">
-            <Server className="w-5 h-5 text-primary" />
-            Service Status
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-            {services.map((service) => (
-              <div
-                key={service.name}
-                className="p-4 rounded-lg bg-secondary/50 border border-border"
-              >
-                <div className="flex items-center justify-between mb-2">
-                  <div className="flex items-center gap-2">
-                    {getStatusIcon(service.status)}
-                    <span className="font-medium text-foreground text-sm">{service.name}</span>
-                  </div>
-                  {getStatusBadge(service.status)}
-                </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Uptime: {service.uptime}</span>
-                  <span>{service.lastCheck}</span>
-                </div>
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
+        <Card className="glass-card">
+          <CardHeader><CardTitle className="flex items-center gap-2"><Network className="h-5 w-5 text-info" />HTTP health & SSL coverage</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {overview?.httpChecks.length ? overview.httpChecks.map((check) => (
+              <div key={check.id} className="rounded-lg border border-border p-3">
+                <div className="flex items-center justify-between gap-3"><div><p className="font-medium">{check.label}</p><p className="text-xs text-muted-foreground">{check.url} • {check.response_time_ms ?? "-"} ms • HTTP {check.last_status_code ?? check.expected_status}</p><p className="text-xs text-muted-foreground">SSL expiry: {check.ssl_expires_at ? new Date(check.ssl_expires_at).toLocaleDateString() : "not tracked"}</p></div><Badge variant="outline" className={statusStyles[check.status]}>{check.status}</Badge></div>
               </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+            )) : <p className="text-sm text-muted-foreground">No HTTP health checks configured.</p>}
+          </CardContent>
+        </Card>
 
-      {/* Quick Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-success/20 flex items-center justify-center">
-                <CheckCircle2 className="w-5 h-5 text-success" />
-              </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {services.filter((s) => s.status === "online").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Services Online</p>
-              </div>
-            </div>
+          <CardHeader><CardTitle className="flex items-center gap-2"><ShieldAlert className="h-5 w-5 text-warning" />Alert families</CardTitle></CardHeader>
+          <CardContent className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <div className="rounded-lg border border-border p-3"><div className="flex items-center gap-2"><Timer className="h-4 w-4 text-warning" /><span className="font-medium">SSL expiry alerts</span></div><p className="mt-2 text-2xl font-bold">{sslAlerts.length}</p></div>
+            <div className="rounded-lg border border-border p-3"><div className="flex items-center gap-2"><Mail className="h-4 w-4 text-info" /><span className="font-medium">Mail queue alerts</span></div><p className="mt-2 text-2xl font-bold">{mailQueueAlerts.length}</p></div>
+            <div className="rounded-lg border border-border p-3"><div className="flex items-center gap-2"><Server className="h-4 w-4 text-destructive" /><span className="font-medium">DB slow query alerts</span></div><p className="mt-2 text-2xl font-bold">{slowQueryAlerts.length}</p></div>
+            <div className="rounded-lg border border-border p-3"><div className="flex items-center gap-2"><Radar className="h-4 w-4 text-primary" /><span className="font-medium">Anomaly detections</span></div><p className="mt-2 text-2xl font-bold">{anomalies.length}</p></div>
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 xl:grid-cols-2">
         <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-warning/20 flex items-center justify-center">
-                <AlertTriangle className="w-5 h-5 text-warning" />
+          <CardHeader><CardTitle className="flex items-center gap-2"><AlertTriangle className="h-5 w-5 text-warning" />Open alerts</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {openAlerts.length ? openAlerts.map((alert) => (
+              <div key={alert.id} className="rounded-lg border border-border p-3">
+                <div className="flex items-start justify-between gap-3"><div><p className="font-medium">{alert.title}</p><p className="text-sm text-muted-foreground">{alert.message}</p><p className="text-xs text-muted-foreground">Detected {new Date(alert.detected_at).toLocaleString()} • {alert.source_type}</p></div><div className="flex gap-2"><Badge variant="outline" className={severityStyles[alert.severity]}>{alert.severity}</Badge><Badge variant="outline" className={statusStyles[alert.status]}>{alert.status}</Badge></div></div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {services.filter((s) => s.status === "warning").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Warnings</p>
-              </div>
-            </div>
+            )) : <p className="text-sm text-muted-foreground">No open alerts.</p>}
           </CardContent>
         </Card>
+
         <Card className="glass-card">
-          <CardContent className="p-4">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-lg bg-destructive/20 flex items-center justify-center">
-                <XCircle className="w-5 h-5 text-destructive" />
+          <CardHeader><CardTitle className="flex items-center gap-2"><Clock className="h-5 w-5 text-primary" />Uptime / incident timeline</CardTitle></CardHeader>
+          <CardContent className="space-y-3">
+            {overview?.incidents.length ? overview.incidents.map((incident) => (
+              <div key={incident.id} className="rounded-lg border border-border p-3">
+                <div className="flex items-start justify-between gap-3"><div><p className="font-medium">{incident.title}</p><p className="text-sm text-muted-foreground">{incident.summary || "No summary provided."}</p><p className="text-xs text-muted-foreground">Started {new Date(incident.started_at).toLocaleString()}{incident.resolved_at ? ` • resolved ${new Date(incident.resolved_at).toLocaleString()}` : ""}</p></div><div className="flex gap-2"><Badge variant="outline" className={severityStyles[incident.severity]}>{incident.severity}</Badge><Badge variant="outline" className={statusStyles[incident.status]}>{incident.status}</Badge></div></div>
               </div>
-              <div>
-                <p className="text-2xl font-bold text-foreground">
-                  {services.filter((s) => s.status === "offline").length}
-                </p>
-                <p className="text-sm text-muted-foreground">Services Offline</p>
-              </div>
-            </div>
+            )) : <p className="text-sm text-muted-foreground">No incidents recorded yet.</p>}
           </CardContent>
         </Card>
+      </div>
+
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+        <Card className="glass-card"><CardContent className="flex items-center gap-3 p-4"><CheckCircle2 className="h-8 w-8 text-success" /><div><p className="text-2xl font-bold">{overview?.processHealth.filter((item) => item.status === "healthy").length ?? 0}</p><p className="text-sm text-muted-foreground">Healthy processes</p></div></CardContent></Card>
+        <Card className="glass-card"><CardContent className="flex items-center gap-3 p-4"><AlertTriangle className="h-8 w-8 text-warning" /><div><p className="text-2xl font-bold">{openAlerts.filter((item) => item.severity !== "critical").length}</p><p className="text-sm text-muted-foreground">Warnings</p></div></CardContent></Card>
+        <Card className="glass-card"><CardContent className="flex items-center gap-3 p-4"><XCircle className="h-8 w-8 text-destructive" /><div><p className="text-2xl font-bold">{openAlerts.filter((item) => item.severity === "critical").length}</p><p className="text-sm text-muted-foreground">Critical alerts</p></div></CardContent></Card>
       </div>
     </div>
   );
