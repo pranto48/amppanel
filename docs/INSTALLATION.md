@@ -2,10 +2,20 @@
 
 AMP Panel is a modern server control panel for managing web hosting services. This guide covers installation on both Ubuntu Server and Docker.
 
+## Recommended First Server
+
+For the best first-time experience, use a fresh server with:
+
+- **Ubuntu 24.04 LTS** or **Ubuntu 22.04 LTS**
+- **4 vCPU / 8 GB RAM / 80 GB SSD** minimum recommended
+- 1 public IPv4 address
+- Ports **80** and **443** open
+- Root or sudo access
+
+Start with a dedicated panel VM first. After the panel is stable, install modules/plugins such as web, email, FTP, SSL, Node.js, PHP runtimes, AI/automation, backups, firewall, and logs from the built-in marketplace.
+
 ## Prerequisites
 
-- A server with at least 2GB RAM, 20GB disk space
-- Root or sudo access
 - Git installed
 - Domain name pointed to your server (recommended)
 
@@ -21,6 +31,12 @@ cd amppanel
 ```
 
 ### Step 2: Choose Your Installation Method
+
+**Recommended order for first deployment:**
+1. Start with Docker if you want the fastest, safest install path.
+2. Use the Ubuntu script when you prefer direct host installation.
+3. After login, go to **Getting Started** and **Plugins** inside the panel to enable the modules you want.
+
 
 #### Option A: Docker (Recommended)
 
