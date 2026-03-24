@@ -2497,6 +2497,176 @@ export type Database = {
           },
         ]
       }
+      service_control_runs: {
+        Row: {
+          action: Database["public"]["Enums"]["service_control_action"]
+          config_test_passed: boolean | null
+          created_at: string
+          id: string
+          output: string | null
+          requested_by: string | null
+          service_id: string
+          status: Database["public"]["Enums"]["service_runtime_status"]
+        }
+        Insert: {
+          action: Database["public"]["Enums"]["service_control_action"]
+          config_test_passed?: boolean | null
+          created_at?: string
+          id?: string
+          output?: string | null
+          requested_by?: string | null
+          service_id: string
+          status?: Database["public"]["Enums"]["service_runtime_status"]
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["service_control_action"]
+          config_test_passed?: boolean | null
+          created_at?: string
+          id?: string
+          output?: string | null
+          requested_by?: string | null
+          service_id?: string
+          status?: Database["public"]["Enums"]["service_runtime_status"]
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_control_runs_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_journal_entries: {
+        Row: {
+          id: string
+          logged_at: string
+          message: string
+          service_id: string
+          severity: string
+          unit: string
+        }
+        Insert: {
+          id?: string
+          logged_at?: string
+          message: string
+          service_id: string
+          severity?: string
+          unit: string
+        }
+        Update: {
+          id?: string
+          logged_at?: string
+          message?: string
+          service_id?: string
+          severity?: string
+          unit?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_journal_entries_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_maintenance_actions: {
+        Row: {
+          action: Database["public"]["Enums"]["service_control_action"]
+          action_name: string
+          created_at: string
+          cron_expression: string
+          id: string
+          is_enabled: boolean
+          last_run_at: string | null
+          next_run_at: string | null
+          payload: Json
+          service_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          action?: Database["public"]["Enums"]["service_control_action"]
+          action_name: string
+          created_at?: string
+          cron_expression: string
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          payload?: Json
+          service_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          action?: Database["public"]["Enums"]["service_control_action"]
+          action_name?: string
+          created_at?: string
+          cron_expression?: string
+          id?: string
+          is_enabled?: boolean
+          last_run_at?: string | null
+          next_run_at?: string | null
+          payload?: Json
+          service_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_maintenance_actions_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      service_package_updates: {
+        Row: {
+          applied_at: string | null
+          available_at: string
+          current_version: string
+          id: string
+          package_name: string
+          service_id: string
+          status: string
+          summary: string | null
+          target_version: string
+        }
+        Insert: {
+          applied_at?: string | null
+          available_at?: string
+          current_version: string
+          id?: string
+          package_name: string
+          service_id: string
+          status?: string
+          summary?: string | null
+          target_version: string
+        }
+        Update: {
+          applied_at?: string | null
+          available_at?: string
+          current_version?: string
+          id?: string
+          package_name?: string
+          service_id?: string
+          status?: string
+          summary?: string | null
+          target_version?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "service_package_updates_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "system_services"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       system_metrics: {
         Row: {
           cpu_percent: number
