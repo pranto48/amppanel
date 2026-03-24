@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { 
   LayoutDashboard, 
+  Rocket,
   Globe, 
   Database, 
+  BadgeDollarSign,
   FolderOpen, 
   Shield, 
   Settings, 
@@ -38,8 +40,10 @@ interface SidebarProps {
 
 const menuItems = [
   { id: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { id: "getting-started", label: "Getting Started", icon: Rocket },
   { id: "plugins", label: "Plugins", icon: Store },
   { id: "sites", label: "Sites", icon: Globe },
+  { id: "hosting", label: "Hosting Plans", icon: BadgeDollarSign },
   { id: "subdomains", label: "Subdomains", icon: Layers },
   { id: "databases", label: "Databases", icon: Database },
   { id: "files", label: "File Manager", icon: FolderOpen },
