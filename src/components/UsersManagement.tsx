@@ -168,6 +168,15 @@ export const UsersManagement = () => {
       toast({ variant: "destructive", title: "Error", description: "Email and password are required." });
       return;
     }
+    const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(userForm.email);
+    if (!emailValid) {
+      toast({ variant: "destructive", title: "Invalid email", description: "Please provide a valid email address." });
+      return;
+    }
+    if (userForm.password.length < 8) {
+      toast({ variant: "destructive", title: "Weak password", description: "Password must be at least 8 characters." });
+      return;
+    }
     try {
       await createUser.mutateAsync({
         email: userForm.email,

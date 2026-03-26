@@ -51,6 +51,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { useFirmwareUpdate, CURRENT_VERSION } from "@/hooks/useFirmwareUpdate";
 import { TwoFactorSetup } from "@/components/TwoFactorSetup";
+import { PlatformParityPanel } from "@/components/PlatformParityPanel";
 import { supabase } from "@/integrations/supabase/client";
 import { z } from "zod";
 
@@ -242,7 +243,17 @@ export const SettingsPage = () => {
             <Cpu className="w-4 h-4 mr-2" />
             Firmware
           </TabsTrigger>
+          <TabsTrigger value="platforms" className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground">
+            <Globe className="w-4 h-4 mr-2" />
+            Platforms
+          </TabsTrigger>
         </TabsList>
+
+
+
+        <TabsContent value="platforms" className="space-y-6">
+          <PlatformParityPanel />
+        </TabsContent>
 
         {/* Account Tab */}
         <TabsContent value="account" className="space-y-6">
