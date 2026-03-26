@@ -83,28 +83,36 @@ export const AddSiteDialog = ({ children }: AddSiteDialogProps) => {
         php_version: siteType === "php" || siteType === "wordpress" ? phpVersion : null,
       });
 
-      const provisionResult = await provisionSiteService.mutateAsync({
-        siteId: result.id,
-        config: {
-          web_server: webServer,
-          template,
-          runtime_environment: runtimeEnvironment,
-          php_fpm_enabled: template === "php_fpm",
-          php_fpm_version: template === "php_fpm" ? phpVersion : null,
-          listen_port: listenPort ? Number(listenPort) : null,
-          proxy_target: proxyTarget || null,
-          custom_vhost_config: customVhostConfig || null,
-        },
-      });
-
       logSiteCreated(domain.trim(), result.id);
+      
+      try {
+        const provisionResult = await provisionSiteService.mutateAsync({
+          siteId: result.id,
+          config: {
+            web_server: webServer,
+            template,
+            runtime_environment: runtimeEnvironment,
+            php_fpm_enabled: template === "php_fpm",
+            php_fpm_version: template === "php_fpm" ? phpVersion : null,
+            listen_port: listenPort ? Number(listenPort) : null,
+            proxy_target: proxyTarget || null,
+            custom_vhost_config: customVhostConfig || null,
+          },
+        });
 
-      toast({
-        title: "Site created!",
-        description: provisionResult.success
-          ? `${domain.trim()} has been added and its service config was generated.`
-          : `${domain.trim()} was created, but the generated service config needs attention.`,
-      });
+        toast({
+          title: "Site created!",
+          description: provisionResult.success
+            ? `${domain.trim()} has been added and its service config was generated.`
+            : `${domain.trim()} was created, but the generated service config needs attention.`,
+        });
+      } catch (provisionError: any) {
+        toast({
+          variant: "destructive",
+          title: "Site created, but provisioning failed",
+          description: provisionError.message || "The site exists, but service provisioning needs to be retried from Site Configuration.",
+        });
+      }
 
       resetForm();
       setOpen(false);
