@@ -90,11 +90,19 @@ if [ ! -f .env ]; then
 # AMP Panel Configuration
 AMP_DOMAIN=$(hostname -f 2>/dev/null || echo "localhost")
 AMP_ADMIN_EMAIL=admin_amp@localhost
+AMP_HTTP_PORT=8880
+AMP_HTTPS_PORT=8443
 
 # Database (auto-generated)
 DB_PASSWORD=$DB_PASSWORD
 EOF
 fi
+
+# Load .env values for output/runtime checks
+set -a
+# shellcheck disable=SC1091
+source .env
+set +a
 
 # Create directories
 mkdir -p data sites backups
@@ -123,7 +131,8 @@ echo "════════════════════════�
 echo ""
 print_success "AMP Panel installation complete!"
 echo ""
-echo "  Access URL:   http://$SERVER_IP"
+echo "  Access URL:   http://$SERVER_IP:${AMP_HTTP_PORT:-8880}"
+echo "  HTTPS URL:    https://$SERVER_IP:${AMP_HTTPS_PORT:-8443}"
 echo ""
 echo "  Default Login:"
 echo "    Email:      admin_amp@localhost"

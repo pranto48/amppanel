@@ -47,6 +47,14 @@ if [ ! -f .env ]; then
   fi
 fi
 
+# Load .env so configured ports are reflected in output
+if [ -f .env ]; then
+  set -a
+  # shellcheck disable=SC1091
+  source .env
+  set +a
+fi
+
 # Load port configuration from .env or use defaults
 HTTP_PORT=${AMP_HTTP_PORT:-8880}
 HTTPS_PORT=${AMP_HTTPS_PORT:-8443}
@@ -68,6 +76,7 @@ echo -e "${GREEN}║${NC}              AMP Panel Started Successfully!          
 echo -e "${GREEN}╠════════════════════════════════════════════════════════════╣${NC}"
 echo -e "${GREEN}║${NC}                                                            ${GREEN}║${NC}"
 echo -e "${GREEN}║${NC}  Access Panel:  http://localhost:${HTTP_PORT}                      ${GREEN}║${NC}"
+echo -e "${GREEN}║${NC}  HTTPS Port:    https://localhost:${HTTPS_PORT}                     ${GREEN}║${NC}"
 echo -e "${GREEN}║${NC}                                                            ${GREEN}║${NC}"
 echo -e "${GREEN}║${NC}  Default Credentials:                                      ${GREEN}║${NC}"
 echo -e "${GREEN}║${NC}    Email:     admin_amp@localhost                          ${GREEN}║${NC}"
