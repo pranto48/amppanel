@@ -49,12 +49,20 @@ cd amppanel
 
 ```bash
 docker-compose up --build -d
+# Default URL: http://localhost:8880 (unless AMP_HTTP_PORT is overridden)
 ```
 
 ### Ubuntu Server
 
 ```bash
 sudo bash scripts/install-ubuntu.sh
+# Default URL: http://<server-ip>:8880 (unless AMP_HTTP_PORT is overridden)
+```
+
+### Runtime Health Check (Linux + Docker)
+
+```bash
+bash scripts/check-runtime.sh
 ```
 
 ## Documentation
