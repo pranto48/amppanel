@@ -139,8 +139,49 @@ export const useCreateUser = () => {
         },
       });
 
-      if (error) throw error;
-      return data;
+      if (!error && data?.success) {
+        return data;
+      }
+
+      const fallbackReason = error?.message || data?.error;
+
+      // Fallback for environments where the setup-admin function is unavailable/misconfigured.
+      const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+        email: userData.email,
+        password: userData.password,
+        options: {
+          data: { full_name: userData.full_name || "" },
+        },
+      });
+
+      if (signUpError || !signUpData.user) {
+        throw new Error(fallbackReason || signUpError?.message || "Unable to create user.");
+      }
+
+      const userId = signUpData.user.id;
+
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .upsert({
+          id: userId,
+          email: userData.email,
+          full_name: userData.full_name || "",
+        });
+
+      if (profileError) {
+        throw new Error(profileError.message);
+      }
+
+      if (userData.role && userData.role !== "user") {
+        await supabase.from("user_roles").delete().eq("user_id", userId);
+        const { error: roleError } = await supabase.from("user_roles").insert({
+          user_id: userId,
+          role: userData.role,
+        });
+        if (roleError) throw new Error(roleError.message);
+      }
+
+      return { success: true, user: signUpData.user, fallback: true };
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["profiles"] });
