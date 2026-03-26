@@ -18,6 +18,25 @@ A modern, open-source server control panel for managing web hosting services. Bu
 - 👥 **User Management** - Role-based access control
 - 🖥️ **Terminal** - Web-based terminal emulator
 
+## Recommended First Server
+
+For the easiest first production deployment, start with:
+
+- **OS:** Ubuntu Server 24.04 LTS or 22.04 LTS
+- **Size:** 4 vCPU, 8 GB RAM, 80 GB NVMe SSD
+- **Network:** 1 public IPv4, ports 80/443 open
+- **Topology:** One dedicated VM for the panel first, then add modules/plugins as needed
+
+This gives enough headroom to run the panel plus common modules such as web, mail, DNS, backup, firewall, and logs.
+
+## Installation Flow
+
+1. Provision a clean Linux VM or Docker host.
+2. Install AMP Panel with **Docker Compose** or the **Ubuntu install script**.
+3. Sign in with the bootstrap admin account and immediately rotate credentials.
+4. Install only the modules you need from **Plugins** (web, email, FTP, SSL, Node.js, PHP versions, backups, firewall, logs, AI/automation).
+5. Configure domains, SSL, backups, and monitoring before onboarding live sites.
+
 ## Quick Start
 
 ```bash
@@ -30,12 +49,20 @@ cd amppanel
 
 ```bash
 docker-compose up --build -d
+# Default URL: http://localhost:8880 (unless AMP_HTTP_PORT is overridden)
 ```
 
 ### Ubuntu Server
 
 ```bash
 sudo bash scripts/install-ubuntu.sh
+# Default URL: http://<server-ip>:8880 (unless AMP_HTTP_PORT is overridden)
+```
+
+### Runtime Health Check (Linux + Docker)
+
+```bash
+bash scripts/check-runtime.sh
 ```
 
 ## Documentation
