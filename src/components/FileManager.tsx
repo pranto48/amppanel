@@ -184,6 +184,10 @@ export const FileManager = () => {
                 </div>
               </div>
             </div>
+            <div className="glass-card rounded-xl p-4">
+              <p className="font-medium">Operational features</p>
+              <p className="mt-2 text-sm text-muted-foreground">Supports unzip/zip/tar extraction, git clone/pull, file diff history, permission management, ownership fixes, malware scans, and archive publishing.</p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
