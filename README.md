@@ -18,6 +18,14 @@ A modern, open-source server control panel for managing web hosting services. Bu
 - 👥 **User Management** - Role-based access control
 - 🖥️ **Terminal** - Web-based terminal emulator
 
+### Platform Support Matrix
+
+| Platform target | Support status | Notes |
+|-----------------|----------------|-------|
+| Linux host | ✅ Supported | Native Ubuntu install script and Docker workflows are supported. |
+| Docker host | ✅ Supported | Docker Compose install is supported for Linux-based container hosts. |
+| Windows via Docker Desktop | ✅ Supported | Windows supported via Docker Desktop/WSL2 only. |
+
 ## Recommended First Server
 
 For the easiest first production deployment, start with:
@@ -31,7 +39,7 @@ This gives enough headroom to run the panel plus common modules such as web, mai
 
 ## Installation Flow
 
-1. Provision a clean Linux VM or Docker host.
+1. Choose a supported platform target: **Linux host**, **Docker host**, or **Windows via Docker Desktop** (WSL2).
 2. Install AMP Panel with **Docker Compose** or the **Ubuntu install script**.
 3. Sign in with the bootstrap admin account and immediately rotate credentials.
 4. Install only the modules you need from **Plugins** (web, email, FTP, SSL, Node.js, PHP versions, backups, firewall, logs, AI/automation).
@@ -62,6 +70,7 @@ sudo bash scripts/install-ubuntu.sh
 ### Windows PC (WSL2 + Docker Desktop)
 
 Use this path when working from a Windows 10/11 machine.
+Windows supported via Docker Desktop/WSL2 only.
 
 **Prerequisites**
 - Windows 11 or Windows 10
@@ -95,7 +104,7 @@ docker compose up --build -d
   sudo chown -R $USER:$USER .
   ```
 
-### Runtime Health Check (Linux + Docker)
+### Runtime Health Check (Linux host + Docker host)
 
 ```bash
 bash scripts/check-runtime.sh
