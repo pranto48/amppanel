@@ -3,6 +3,7 @@ import {
   ChevronRight,
   Download,
   Edit,
+  FileCog,
   File,
   FileArchive,
   FileCode,
@@ -13,8 +14,8 @@ import {
   GitBranch,
   Home,
   MoreVertical,
+  Search,
   RefreshCw,
-  ScanSearch,
   ShieldAlert,
   Sparkles,
   Trash2,
@@ -69,6 +70,7 @@ export const FileManager = () => {
   const [newFolderDialogOpen, setNewFolderDialogOpen] = useState(false);
   const [newFolderName, setNewFolderName] = useState("");
   const [dragOver, setDragOver] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
   const [archiveForm, setArchiveForm] = useState({ archivePath: "", destinationPath: "/public/extracted", archiveType: "zip" as "zip" | "tar" | "unzip", publishDomain: "" });
   const [gitForm, setGitForm] = useState({ repositoryUrl: "", branch: "main", targetPath: "/public" });
   const [permissionForm, setPermissionForm] = useState({ targetPath: "/public", mode: "755", owner: "www-data", group: "www-data" });
@@ -121,6 +123,17 @@ export const FileManager = () => {
 
   const breadcrumbs = useMemo(() => currentPath.split("/").filter(Boolean), [currentPath]);
   const selectedSite = sites?.find((site) => site.id === selectedSiteId);
+  const quickFolders = useMemo(() => {
+    const base = ["/", "/public", "/public_html", "/uploads", "/logs", "/tmp"];
+    const dynamic = files.filter((file) => file.type === "folder").map((file) => file.path);
+    return [...new Set([...base, ...dynamic])].slice(0, 14);
+  }, [files]);
+
+  const filteredFiles = useMemo(() => {
+    if (!searchTerm.trim()) return files;
+    const q = searchTerm.trim().toLowerCase();
+    return files.filter((file) => file.name.toLowerCase().includes(q));
+  }, [files, searchTerm]);
 
   return (
     <div className="space-y-6">
@@ -139,10 +152,22 @@ export const FileManager = () => {
         <div className="glass-card rounded-xl p-12 text-center"><Folder className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><p className="text-muted-foreground">Select a site to manage its files.</p></div>
       ) : (
         <>
-          <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-            <div className="glass-card rounded-xl p-4 xl:col-span-2">
-              <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                <div className="flex flex-1 items-center gap-1 overflow-x-auto">
+          <div className="glass-card rounded-xl p-4">
+            <div className="mb-3 flex flex-wrap items-center gap-2">
+              <Button variant="outline" size="sm" onClick={() => setNewFolderDialogOpen(true)}><FolderPlus className="mr-2 h-4 w-4" />Folder</Button>
+              <label>
+                <Button variant="outline" size="sm" asChild><span className="cursor-pointer"><Upload className="mr-2 h-4 w-4" />Upload</span></Button>
+                <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(e.target.files)} />
+              </label>
+              <Button variant="outline" size="sm" onClick={() => listFiles(currentPath)}><RefreshCw className={cn("mr-2 h-4 w-4", loading && "animate-spin")} />Reload</Button>
+              <Button variant="outline" size="sm" onClick={() => extractArchive(archiveForm.archivePath, archiveForm.destinationPath, archiveForm.archiveType)}><FileArchive className="mr-2 h-4 w-4" />Extract</Button>
+              <Button variant="outline" size="sm" onClick={() => runGitOperation("git_pull", gitForm.repositoryUrl, gitForm.targetPath, gitForm.branch)}><GitBranch className="mr-2 h-4 w-4" />Git Pull</Button>
+              <Button variant="outline" size="sm" onClick={() => setPermissions(permissionForm.targetPath, permissionForm.mode)}><Wrench className="mr-2 h-4 w-4" />CHMOD</Button>
+              <Button variant="outline" size="sm" onClick={() => scanForMalware(currentPath)}><ShieldAlert className="mr-2 h-4 w-4" />Scan</Button>
+            </div>
+
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
+              <div className="flex flex-1 items-center gap-1 overflow-x-auto rounded-lg border border-border bg-secondary/30 px-2 py-1">
                   <button onClick={() => listFiles("/")} className="rounded-lg p-2 hover:bg-muted"><Home className="h-4 w-4 text-muted-foreground" /></button>
                   <ChevronRight className="h-4 w-4 text-muted-foreground" />
                   <span className="text-sm text-muted-foreground">{selectedSite?.domain}</span>
@@ -153,13 +178,9 @@ export const FileManager = () => {
                     </div>
                   ))}
                 </div>
-                <div className="flex gap-2">
-                  <Button variant="outline" size="sm" onClick={() => setNewFolderDialogOpen(true)}><FolderPlus className="mr-2 h-4 w-4" />New Folder</Button>
-                  <label>
-                    <Button variant="outline" size="sm" asChild><span className="cursor-pointer"><Upload className="mr-2 h-4 w-4" />Upload</span></Button>
-                    <input type="file" multiple className="hidden" onChange={(e) => handleFileUpload(e.target.files)} />
-                  </label>
-                  <Button variant="outline" size="icon" onClick={() => listFiles(currentPath)}><RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /></Button>
+                <div className="relative w-full sm:w-72">
+                  <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                  <Input value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} placeholder="Search current folder..." className="pl-9" />
                 </div>
               </div>
             </div>
@@ -169,27 +190,52 @@ export const FileManager = () => {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 gap-6 xl:grid-cols-3">
+          <div className="grid grid-cols-1 gap-6 xl:grid-cols-4">
+            <div className="glass-card rounded-xl p-4 xl:col-span-1">
+              <div className="mb-3 flex items-center gap-2 font-medium"><Folder className="h-4 w-4 text-warning" />Folders</div>
+              <div className="space-y-1">
+                {quickFolders.map((folder) => (
+                  <button
+                    key={folder}
+                    onClick={() => listFiles(folder)}
+                    className={cn("flex w-full items-center gap-2 rounded-md px-2 py-1.5 text-left text-sm hover:bg-secondary/60", folder === currentPath && "bg-primary/10 text-primary")}
+                  >
+                    <Folder className="h-4 w-4" />
+                    <span className="truncate">{folder === "/" ? "home" : folder}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <div className={cn("glass-card rounded-xl overflow-hidden transition-all xl:col-span-2", dragOver && "ring-2 ring-primary ring-offset-2 ring-offset-background")} onDrop={handleDrop} onDragOver={(e) => { e.preventDefault(); setDragOver(true); }} onDragLeave={() => setDragOver(false)}>
               {loading ? (
                 <div className="p-12 text-center"><div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-2 border-primary/30 border-t-primary" /><p className="text-muted-foreground">Loading files...</p></div>
-              ) : files.length ? (
-                <div className="divide-y divide-border">
+              ) : filteredFiles.length ? (
+                <div>
+                  <div className="grid grid-cols-12 border-b border-border bg-secondary/40 px-4 py-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                    <div className="col-span-6">Name</div>
+                    <div className="col-span-2">Size</div>
+                    <div className="col-span-2">Type</div>
+                    <div className="col-span-1 text-right">Actions</div>
+                  </div>
+                  <div className="divide-y divide-border">
                   {currentPath !== "/" && (
                     <button onClick={() => listFiles("/" + breadcrumbs.slice(0, -1).join("/") || "/")} className="flex w-full items-center gap-4 p-4 text-left hover:bg-muted/30"><Folder className="h-5 w-5 text-muted-foreground" /><span className="text-muted-foreground">..</span></button>
                   )}
-                  {files.map((item) => {
+                  {filteredFiles.map((item) => {
                     const FileIcon = getFileIcon(item.name, item.type);
                     return (
-                      <div key={item.id} className="group flex items-center gap-4 p-4 hover:bg-muted/30">
-                        <button onClick={() => handleItemClick(item)} className="flex min-w-0 flex-1 items-center gap-4 text-left">
-                          <div className={cn("flex h-10 w-10 items-center justify-center rounded-lg", item.type === "folder" ? "bg-warning/10" : "bg-primary/10")}><FileIcon className={cn("h-5 w-5", item.type === "folder" ? "text-warning" : "text-primary")} /></div>
-                          <div className="min-w-0 flex-1"><p className="truncate font-medium">{item.name}</p><p className="text-xs text-muted-foreground">{item.type === "folder" ? "Folder" : formatFileSize(item.size)}</p></div>
+                      <div key={item.id} className="group grid grid-cols-12 items-center gap-2 px-4 py-3 hover:bg-muted/30">
+                        <button onClick={() => handleItemClick(item)} className="col-span-6 flex min-w-0 items-center gap-3 text-left">
+                          <div className={cn("flex h-8 w-8 items-center justify-center rounded-md", item.type === "folder" ? "bg-warning/10" : "bg-primary/10")}><FileIcon className={cn("h-4 w-4", item.type === "folder" ? "text-warning" : "text-primary")} /></div>
+                          <div className="min-w-0"><p className="truncate font-medium">{item.name}</p></div>
                         </button>
-                        <div className="flex items-center gap-2 opacity-0 transition-opacity group-hover:opacity-100">
+                        <div className="col-span-2 text-sm text-muted-foreground">{item.type === "folder" ? "-" : formatFileSize(item.size)}</div>
+                        <div className="col-span-2 text-sm text-muted-foreground">{item.type === "folder" ? "Directory" : item.mimeType || "File"}</div>
+                        <div className="col-span-1 flex justify-end items-center gap-1 opacity-0 transition-opacity group-hover:opacity-100">
                           {item.type === "file" && isTextFile(item.name) && <Button variant="ghost" size="icon" onClick={() => setEditingFile(item)}><Edit className="h-4 w-4" /></Button>}
                           {item.type === "file" && <Button variant="ghost" size="icon" onClick={() => downloadFile(item.path, item.name)}><Download className="h-4 w-4" /></Button>}
-                          {item.type === "file" && <Button variant="ghost" size="icon" onClick={() => scanForMalware(item.path)}><ScanSearch className="h-4 w-4" /></Button>}
+                          {item.type === "file" && <Button variant="ghost" size="icon" onClick={() => scanForMalware(item.path)}><FileCog className="h-4 w-4" /></Button>}
                           <DropdownMenu>
                             <DropdownMenuTrigger asChild><Button variant="ghost" size="icon"><MoreVertical className="h-4 w-4" /></Button></DropdownMenuTrigger>
                             <DropdownMenuContent align="end">
@@ -205,12 +251,13 @@ export const FileManager = () => {
                     );
                   })}
                 </div>
+                </div>
               ) : (
-                <div className="p-12 text-center"><Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><p className="text-muted-foreground">No files yet. Upload, extract an archive, or clone a repository.</p></div>
+                <div className="p-12 text-center"><Upload className="mx-auto mb-4 h-12 w-12 text-muted-foreground" /><p className="text-muted-foreground">{searchTerm ? "No files match this search in the current folder." : "No files yet. Upload, extract an archive, or clone a repository."}</p></div>
               )}
             </div>
 
-            <div className="space-y-4">
+            <div className="space-y-4 xl:col-span-1">
               <div className="glass-card rounded-xl p-4 space-y-3">
                 <div className="flex items-center gap-2 font-medium"><FileArchive className="h-4 w-4 text-primary" />Archive extraction & publish</div>
                 <div className="space-y-2"><Label>Archive path</Label><Input value={archiveForm.archivePath} onChange={(e) => setArchiveForm((v) => ({ ...v, archivePath: e.target.value }))} placeholder="/uploads/site.zip" /></div>

@@ -2445,7 +2445,7 @@ export type Database = {
             foreignKeyName: "waf_events_site_id_fkey"
             columns: ["site_id"]
             isOneToOne: false
-            referencedRelation: "sites"
+            referencedRelation: "system_services"
             referencedColumns: ["id"]
           },
         ]
