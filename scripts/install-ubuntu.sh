@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # AMP Panel Installer for Ubuntu 22.04+
+# Compatibility: Ubuntu Linux only. Run with Bash.
 # Usage: sudo bash scripts/install-ubuntu.sh
 
 set -e
@@ -16,6 +17,28 @@ print_status() { echo -e "${BLUE}[*]${NC} $1"; }
 print_success() { echo -e "${GREEN}[✓]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
 print_error() { echo -e "${RED}[✗]${NC} $1"; }
+
+# Early environment compatibility checks
+if [ -z "${BASH_VERSION:-}" ]; then
+  print_error "Unsupported shell. Please run this script with Bash:"
+  echo "    sudo bash scripts/install-ubuntu.sh"
+  exit 1
+fi
+
+OS_NAME="$(uname -s)"
+if [ "$OS_NAME" != "Linux" ]; then
+  case "$OS_NAME" in
+    MINGW*|MSYS*|CYGWIN*)
+      print_error "Unsupported operating system (Windows)."
+      echo "    Use WSL2 + Docker Desktop and run from WSL."
+      ;;
+    *)
+      print_error "Unsupported operating system: $OS_NAME."
+      echo "    This installer currently supports Linux only."
+      ;;
+  esac
+  exit 1
+fi
 
 # Check if running as root
 if [ "$EUID" -ne 0 ]; then
@@ -34,7 +57,9 @@ echo ""
 if [ -f /etc/os-release ]; then
   . /etc/os-release
   if [ "$ID" != "ubuntu" ]; then
-    print_warning "This script is designed for Ubuntu. Detected: $ID"
+    print_error "Unsupported Linux distribution: $ID."
+    echo "    This installer supports Ubuntu only."
+    exit 1
   fi
 fi
 
