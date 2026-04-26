@@ -18,6 +18,41 @@ print_success() { echo -e "${GREEN}[✓]${NC} $1"; }
 print_warning() { echo -e "${YELLOW}[!]${NC} $1"; }
 print_error() { echo -e "${RED}[✗]${NC} $1"; }
 
+check_port_in_use() {
+  local port="$1"
+
+  if command -v ss &> /dev/null && ss -ltn "( sport = :$port )" 2>/dev/null | tail -n +2 | grep -q .; then
+    return 0
+  fi
+
+  if command -v lsof &> /dev/null && lsof -iTCP:"$port" -sTCP:LISTEN -Pn 2>/dev/null | tail -n +2 | grep -q .; then
+    return 0
+  fi
+
+  if command -v netstat &> /dev/null && netstat -ltn 2>/dev/null | awk '{print $4}' | grep -Eq "(^|:)$port$"; then
+    return 0
+  fi
+
+  return 1
+}
+
+print_port_conflict_guidance() {
+  local http_port="$1"
+  local https_port="$2"
+
+  echo ""
+  print_error "Port conflict detected. AMP Panel installation halted before service startup."
+  echo "    One or more configured ports are already in use."
+  echo "    Update .env and retry with free ports."
+  echo ""
+  echo "    Suggested .env configuration:"
+  echo "      AMP_HTTP_PORT=$http_port"
+  echo "      AMP_HTTPS_PORT=$https_port"
+  echo ""
+  echo "    Then run:"
+  echo "      sudo bash scripts/install-ubuntu.sh"
+}
+
 # Early environment compatibility checks
 if [ -z "${BASH_VERSION:-}" ]; then
   print_error "Unsupported shell. Please run this script with Bash:"
@@ -128,6 +163,36 @@ set -a
 # shellcheck disable=SC1091
 source .env
 set +a
+
+# Preflight host port checks before bringing services up
+HTTP_PORT=${AMP_HTTP_PORT:-8880}
+HTTPS_PORT=${AMP_HTTPS_PORT:-8443}
+CONFLICT=0
+
+if check_port_in_use "$HTTP_PORT"; then
+  print_warning "HTTP port $HTTP_PORT is already in use."
+  CONFLICT=1
+fi
+
+if check_port_in_use "$HTTPS_PORT"; then
+  print_warning "HTTPS port $HTTPS_PORT is already in use."
+  CONFLICT=1
+fi
+
+if [ "$CONFLICT" -eq 1 ]; then
+  ALT_HTTP_PORT=8881
+  ALT_HTTPS_PORT=8444
+
+  while check_port_in_use "$ALT_HTTP_PORT"; do
+    ALT_HTTP_PORT=$((ALT_HTTP_PORT + 1))
+  done
+  while check_port_in_use "$ALT_HTTPS_PORT"; do
+    ALT_HTTPS_PORT=$((ALT_HTTPS_PORT + 1))
+  done
+
+  print_port_conflict_guidance "$ALT_HTTP_PORT" "$ALT_HTTPS_PORT"
+  exit 1
+fi
 
 # Create directories
 mkdir -p data sites backups
