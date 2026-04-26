@@ -49,11 +49,6 @@ export function PlatformParityPanel() {
         <CardDescription>
           Unified capability contract so all platform targets expose the same operational surface.
         </CardDescription>
-        <div>
-          <Badge variant="outline" className="border-warning/40 bg-warning/10 text-warning-foreground">
-            Windows supported via Docker Desktop/WSL2 only
-          </Badge>
-        </div>
       </CardHeader>
       <CardContent className="space-y-5">
         {capabilityGroups.map((group) => (
