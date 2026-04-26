@@ -1,6 +1,7 @@
 #!/bin/bash
 
 # AMP Panel Docker Quick Start
+# Compatibility: Linux only. Run with Bash.
 # Usage: bash scripts/install-docker.sh
 
 set -e
@@ -11,6 +12,28 @@ BLUE='\033[0;34m'
 YELLOW='\033[1;33m'
 RED='\033[0;31m'
 NC='\033[0m'
+
+# Early environment compatibility checks
+if [ -z "${BASH_VERSION:-}" ]; then
+  echo -e "${RED}[✗]${NC} Unsupported shell. Please run this script with Bash:"
+  echo "    bash scripts/install-docker.sh"
+  exit 1
+fi
+
+OS_NAME="$(uname -s)"
+if [ "$OS_NAME" != "Linux" ]; then
+  case "$OS_NAME" in
+    MINGW*|MSYS*|CYGWIN*)
+      echo -e "${RED}[✗]${NC} Unsupported operating system (Windows)."
+      echo "    Use WSL2 + Docker Desktop and run from WSL."
+      ;;
+    *)
+      echo -e "${RED}[✗]${NC} Unsupported operating system: $OS_NAME."
+      echo "    This installer currently supports Linux only."
+      ;;
+  esac
+  exit 1
+fi
 
 # Get the directory where the script is located
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
