@@ -52,6 +52,51 @@ That's it! Your AMP Panel is now running.
 sudo bash scripts/install-ubuntu.sh
 ```
 
+#### Option C: Windows PC (WSL2 + Docker Desktop)
+
+This option is for developers/operators on a Windows laptop or desktop.
+
+**Prerequisites**
+- Windows 11 or Windows 10
+- WSL2 enabled (Ubuntu distro recommended)
+- Docker Desktop installed with WSL integration enabled for your WSL distro
+
+**Important terminal guidance**
+- Clone and run all Linux/Docker commands from your **WSL terminal**.
+- Do **not** run Linux shell scripts from PowerShell/CMD.
+
+```bash
+# Run in Ubuntu (WSL) terminal
+git clone https://github.com/pranto48/amppanel.git
+cd amppanel
+docker compose up --build -d
+```
+
+**Access URL and port mapping**
+- Default URL: `http://localhost:8880`
+- If you set `AMP_HTTP_PORT` in `.env`, use `http://localhost:<AMP_HTTP_PORT>`
+- For LAN/remote access from other devices, confirm Windows Defender Firewall allows inbound traffic on your mapped port(s)
+
+**Known limitations**
+- `scripts/install-ubuntu.sh` targets native Ubuntu hosts and is not a native Windows installer.
+- On Windows, use the Docker Desktop + WSL path.
+
+**Troubleshooting**
+1. **Docker Desktop engine not running**
+   - Open Docker Desktop and wait for it to report the engine is running.
+   - Re-run:
+     ```bash
+     docker compose up -d
+     ```
+2. **Volume/file permission issues**
+   - Keep the repo inside your WSL filesystem (example: `~/amppanel`) instead of a mounted Windows drive.
+   - Fix ownership and restart:
+     ```bash
+     sudo chown -R $USER:$USER .
+     docker compose down
+     docker compose up -d
+     ```
+
 ### Step 3: Access AMP Panel
 
 Open your browser and navigate to:

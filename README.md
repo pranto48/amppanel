@@ -59,6 +59,42 @@ sudo bash scripts/install-ubuntu.sh
 # Default URL: http://<server-ip>:8880 (unless AMP_HTTP_PORT is overridden)
 ```
 
+### Windows PC (WSL2 + Docker Desktop)
+
+Use this path when working from a Windows 10/11 machine.
+
+**Prerequisites**
+- Windows 11 or Windows 10
+- WSL2 enabled
+- Docker Desktop installed with **WSL integration** enabled for your distro (for example Ubuntu)
+
+**Run from WSL terminal (not PowerShell/CMD for Linux scripts)**
+```bash
+# In Ubuntu (WSL) terminal
+git clone https://github.com/pranto48/amppanel.git
+cd amppanel
+docker compose up --build -d
+```
+
+- Run Linux shell scripts from WSL (`bash`, `sh`, `chmod`) instead of PowerShell/CMD.
+- The Ubuntu installer (`scripts/install-ubuntu.sh`) is for native Ubuntu servers and is **not** a native Windows installer.
+
+**Port mapping and access URL**
+- Default local URL: `http://localhost:8880` (or your configured `AMP_HTTP_PORT`).
+- If you changed ports in `.env`, use `http://localhost:<your-port>`.
+- If remote devices cannot connect, check Windows Defender Firewall rules for Docker Desktop/selected ports.
+
+**Known limitations**
+- Native Ubuntu install flow is not supported directly on Windows host.
+- On Windows, use the Docker/WSL path for reliable setup.
+
+**Quick troubleshooting**
+- **Docker Desktop engine not running:** Start Docker Desktop and wait for "Engine running", then retry `docker compose up -d`.
+- **Volume permission issues in WSL:** keep the project under your Linux home (for example `~/amppanel`), then run:
+  ```bash
+  sudo chown -R $USER:$USER .
+  ```
+
 ### Runtime Health Check (Linux + Docker)
 
 ```bash
